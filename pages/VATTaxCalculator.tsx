@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { TAX_YEARS, MONTHS_KEYS } from '../constants';
-import { getVATTaxReport } from '../services/geminiService';
+import { getVATTaxReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, VATTaxParams, VatBreakdown } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

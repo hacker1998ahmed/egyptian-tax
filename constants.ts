@@ -85,3 +85,11 @@ export const ELECTRICITY_METER_TYPE_KEYS = [
 ];
 
 export const COUNTRIES = ["China", "USA", "Germany", "Japan", "India", "South Korea", "Italy", "France", "Turkey", "Brazil", "United Kingdom", "Russia", "Saudi Arabia", "UAE", "Egypt", "Other"];
+
+export const CUSTOMS_CATEGORY_KEYS = [
+    "electronics",
+    "clothing",
+    "cars",
+    "food",
+    "other",
+];

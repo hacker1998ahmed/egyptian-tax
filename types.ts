@@ -131,6 +131,7 @@ export interface CustomsParams {
     shipmentValue: number;
     description: string;
     countryOfOrigin: string;
+    category: string;
 }
 
 

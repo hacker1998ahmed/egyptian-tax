@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { TAX_YEARS, PROPERTY_TYPE_KEYS, YES_NO_OPTIONS } from '../constants';
-import { getRealEstateTaxReport } from '../services/geminiService';
+import { getRealEstateTaxReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, RealEstateTaxParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

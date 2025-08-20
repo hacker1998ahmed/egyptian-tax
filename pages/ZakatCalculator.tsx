@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { getZakatReport } from '../services/geminiService';
+import { getZakatReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, ZakatParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

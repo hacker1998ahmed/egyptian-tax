@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { getInheritanceReport } from '../services/geminiService';
+import { getInheritanceReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, InheritanceParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

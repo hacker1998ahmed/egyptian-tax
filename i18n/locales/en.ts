@@ -314,6 +314,7 @@ export default {
     "askExpert.send": "Send",
     "askExpert.error.connect": "Sorry, I couldn't connect to the digital expert. Please try again later.",
     "askExpert.error.generic": "An error occurred while processing your request. Please try again.",
+    "askExpert.offline": "You are currently offline. This feature requires an internet connection.",
 
     "roadmap.title": "Future Development Plan",
     "roadmap.back": "Back",
@@ -433,5 +434,11 @@ export default {
     "customs.form.description.label": "Detailed Description of Goods",
     "customs.form.description.placeholder": "e.g., Mobile phone, 256GB",
     "customs.form.origin.label": "Country of Origin",
-    "customs.form.note": "This calculator provides an estimate only. Actual fees are determined by customs authorities."
+    "customs.form.category.label": "Goods Category",
+    "customs.form.note": "This calculator provides an estimate only. Actual fees are determined by customs authorities.",
+    "customs.category.electronics": "Electronics",
+    "customs.category.clothing": "Clothing",
+    "customs.category.cars": "Cars",
+    "customs.category.food": "Foodstuffs",
+    "customs.category.other": "Other"
 } as const;

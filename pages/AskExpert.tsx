@@ -35,6 +35,42 @@ const AskExpert: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const chatRef = useRef<Chat | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        if (isOnline) {
+             const initializeChat = async () => {
+                try {
+                    const chat = startTaxChat();
+                    chatRef.current = chat;
+                    const response = await chat.sendMessageStream({ message: "أهلاً بك" });
+                    let text = '';
+                    for await (const chunk of response) {
+                        text += chunk.text;
+                    }
+                    setMessages([{ role: 'model', text }]);
+                } catch (e) {
+                    setMessages([{ role: 'model', text: t('askExpert.error.connect') }]);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            initializeChat();
+        } else {
+            setIsLoading(false);
+        }
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [t, isOnline]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,30 +78,9 @@ const AskExpert: React.FC = () => {
 
     useEffect(scrollToBottom, [messages, isLoading]);
 
-    useEffect(() => {
-        const initializeChat = async () => {
-            try {
-                const chat = startTaxChat();
-                chatRef.current = chat;
-                // Get the initial welcome message
-                const response = await chat.sendMessageStream({ message: "أهلاً بك" });
-                let text = '';
-                for await (const chunk of response) {
-                    text += chunk.text;
-                }
-                setMessages([{ role: 'model', text }]);
-            } catch (e) {
-                setMessages([{ role: 'model', text: t('askExpert.error.connect') }]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        initializeChat();
-    }, [t]);
-
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isLoading || !chatRef.current) return;
+        if (!input.trim() || isLoading || !chatRef.current || !isOnline) return;
 
         const userMessage: ChatMessage = { role: 'user', text: input };
         setMessages(prev => [...prev, userMessage]);
@@ -100,11 +115,18 @@ const AskExpert: React.FC = () => {
                 <style>{`.dark h2 { --expert-header-shadow: 0 0 5px #22d3ee; }`}</style>
                 {t('askExpert.title')}
             </h2>
-            <div className="flex-grow overflow-y-auto pr-2 space-y-6">
+
+            {!isOnline && (
+                <div className="text-center p-4 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 rounded-lg">
+                    <p>{t('askExpert.offline')}</p>
+                </div>
+            )}
+
+            <div className="flex-grow overflow-y-auto pr-2 space-y-6 mt-4">
                 {messages.map((msg, index) => (
                     <MessageBubble key={index} message={msg} />
                 ))}
-                {isLoading && messages.length > 0 && (
+                {isLoading && isOnline && messages.length > 0 && (
                     <div className="flex justify-start">
                         <div className="bg-gray-200 dark:bg-gray-700/50 rounded-2xl rounded-bl-none">
                             <TypingIndicator />
@@ -120,12 +142,12 @@ const AskExpert: React.FC = () => {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder={t('askExpert.placeholder')}
-                        disabled={isLoading}
+                        disabled={isLoading || !isOnline}
                         className="flex-grow bg-white dark:bg-gray-800/70 border border-gray-300 dark:border-gray-600 rounded-full py-3 px-6 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all duration-300 disabled:opacity-50"
                     />
                     <button
                         type="submit"
-                        disabled={isLoading || !input.trim()}
+                        disabled={isLoading || !input.trim() || !isOnline}
                         className="bg-cyan-600 dark:bg-cyan-500 text-white dark:text-black rounded-full p-3 hover:bg-cyan-700 dark:hover:bg-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-300/50 transition-all duration-300 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/30"
                         aria-label={t('askExpert.send')}
                     >

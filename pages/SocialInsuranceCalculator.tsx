@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { TAX_YEARS } from '../constants';
-import { getSocialInsuranceReport } from '../services/geminiService';
+import { getSocialInsuranceReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, SocialInsuranceParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

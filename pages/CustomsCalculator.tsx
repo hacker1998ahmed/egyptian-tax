@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { getCustomsReport } from '../services/geminiService';
+import { getCustomsReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, CustomsParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';
@@ -7,8 +7,8 @@ import SelectField from '../components/SelectField';
 import Loader from '../components/Loader';
 import ReportDisplay from '../components/ReportDisplay';
 import Welcome from '../components/Welcome';
-import { useTranslation } from '../i18n/context';
-import { COUNTRIES } from '../constants';
+import { useTranslation, TranslationKey } from '../i18n/context';
+import { COUNTRIES, CUSTOMS_CATEGORY_KEYS } from '../constants';
 
 type ViewState = 'form' | 'loading' | 'error' | 'report';
 
@@ -18,6 +18,7 @@ const CustomsCalculator: React.FC = () => {
     shipmentValue: 0,
     description: '',
     countryOfOrigin: 'China',
+    category: CUSTOMS_CATEGORY_KEYS[0],
   });
 
   const [report, setReport] = useState<ReportData | null>(null);
@@ -27,6 +28,10 @@ const CustomsCalculator: React.FC = () => {
   const [, setHistory] = useLocalStorage<CalculationRecord[]>('taxHistory', []);
   
   const countryOptions = useMemo(() => COUNTRIES.map(c => ({ value: c, label: c })), []);
+  const categoryOptions = useMemo(() => CUSTOMS_CATEGORY_KEYS.map(key => ({
+    value: key,
+    label: t(`customs.category.${key}` as TranslationKey)
+  })), [t]);
 
   const handleInputChange = (field: keyof CustomsParams, value: string | number) => {
     setParams(prev => ({ ...prev, [field]: value }));
@@ -66,7 +71,7 @@ const CustomsCalculator: React.FC = () => {
   }, [params, setHistory, t]);
 
   const resetForm = () => {
-    setParams({ shipmentValue: 0, description: '', countryOfOrigin: 'China' });
+    setParams({ shipmentValue: 0, description: '', countryOfOrigin: 'China', category: CUSTOMS_CATEGORY_KEYS[0] });
     setReport(null);
     setError(null);
     setViewState('form');
@@ -96,6 +101,22 @@ const CustomsCalculator: React.FC = () => {
               placeholder={t('customs.form.value.placeholder')}
               required
             />
+             <SelectField
+              id="category"
+              label={t('customs.form.category.label')}
+              value={params.category}
+              onChange={(e) => handleInputChange('category', e.target.value)}
+              options={categoryOptions}
+            />
+            <InputField
+              id="description"
+              label={t('customs.form.description.label')}
+              type="text"
+              value={params.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder={t('customs.form.description.placeholder')}
+              required
+            />
             <SelectField
               id="countryOfOrigin"
               label={t('customs.form.origin.label')}
@@ -103,17 +124,6 @@ const CustomsCalculator: React.FC = () => {
               onChange={(e) => handleInputChange('countryOfOrigin', e.target.value)}
               options={countryOptions}
             />
-            <div className="md:col-span-2">
-                <InputField
-                id="description"
-                label={t('customs.form.description.label')}
-                type="text"
-                value={params.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder={t('customs.form.description.placeholder')}
-                required
-                />
-            </div>
           </div>
            <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center md:col-span-2">
             {t('customs.form.note')}

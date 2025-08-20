@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { TAX_YEARS, WITHHOLDING_TYPE_KEYS } from '../constants';
-import { getWithholdingTaxReport } from '../services/geminiService';
+import { getWithholdingTaxReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, WithholdingTaxParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

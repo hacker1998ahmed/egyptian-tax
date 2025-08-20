@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { getFeasibilityStudyReport } from '../services/geminiService';
+import { getFeasibilityStudyReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, FeasibilityStudyParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

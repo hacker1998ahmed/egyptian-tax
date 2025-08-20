@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { getElectricityReport } from '../services/geminiService';
+import { getElectricityReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, ElectricityParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

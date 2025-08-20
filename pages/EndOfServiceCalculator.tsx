@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { getEndOfServiceReport } from '../services/geminiService';
+import { getEndOfServiceReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, EndOfServiceParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';

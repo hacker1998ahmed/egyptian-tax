@@ -313,6 +313,7 @@ export default {
     "askExpert.send": "إرسال",
     "askExpert.error.connect": "عذراً، لم أتمكن من الاتصال بالخبير الرقمي. يرجى المحاولة مرة أخرى لاحقاً.",
     "askExpert.error.generic": "حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى.",
+    "askExpert.offline": "أنت غير متصل بالإنترنت. هذه الميزة تتطلب اتصالاً بالإنترنت.",
 
     "roadmap.title": "خطة التطوير المستقبلية",
     "roadmap.back": "رجوع",
@@ -432,5 +433,11 @@ export default {
     "customs.form.description.label": "وصف دقيق للسلعة",
     "customs.form.description.placeholder": "مثال: هاتف محمول، 256 جيجا",
     "customs.form.origin.label": "بلد المنشأ",
-    "customs.form.note": "هذه الحاسبة تقدم تقديرًا فقط. الرسوم الفعلية تحددها السلطات الجمركية."
+    "customs.form.category.label": "فئة السلعة",
+    "customs.form.note": "هذه الحاسبة تقدم تقديرًا فقط. الرسوم الفعلية تحددها السلطات الجمركية.",
+    "customs.category.electronics": "إلكترونيات",
+    "customs.category.clothing": "ملابس",
+    "customs.category.cars": "سيارات",
+    "customs.category.food": "مواد غذائية",
+    "customs.category.other": "أخرى"
 } as const;

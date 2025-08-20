@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { TAX_YEARS, ENTITY_TYPE_KEYS, CORPORATE_TAX_LAWS } from '../constants';
-import { getCorporateTaxReport } from '../services/geminiService';
+import { getCorporateTaxReport } from '../services/offlineCalculationService';
 import type { ReportData, CalculationRecord, CorporateTaxParams, CorporateTaxLaw } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';
