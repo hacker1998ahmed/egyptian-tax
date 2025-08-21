@@ -4,7 +4,7 @@ import type { CalculationRecord, ReportData, TaxParams, CorporateTaxParams, VATT
 import ReportDisplay from '../components/ReportDisplay';
 import { CORPORATE_TAX_LAWS } from '../constants';
 import { useTranslation, TranslationKey } from '../i18n/context';
-import { generateHistoryExcelDataUri } from '../utils/reportGenerator';
+import { generateHistoryExcelDataUri, downloadFile } from '../utils/reportGenerator';
 
 const HistoryItem: React.FC<{ record: CalculationRecord; onView: () => void; onDelete: () => void; }> = ({ record, onView, onDelete }) => {
   const { t, language } = useTranslation();
@@ -166,19 +166,19 @@ const History: React.FC = () => {
     }
   }
   
-  const handleExportAllToExcel = () => {
-    if(isExporting) return;
+  const handleExportAllToExcel = async () => {
+    if (isExporting) return;
     setIsExporting(true);
-    const uri = generateHistoryExcelDataUri(sortedHistory, t);
-    if (uri) {
-      const link = document.createElement("a");
-      link.href = uri;
-      link.download = `Calculation-History-${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    try {
+        const uri = generateHistoryExcelDataUri(sortedHistory, (key, ...args) => t(key as any, ...args));
+        const filename = `Calculation-History-${new Date().toISOString().split('T')[0]}.xlsx`;
+        downloadFile(filename, uri, (key) => t(key as any));
+    } catch (error) {
+        console.error("Error during history export:", error);
+        alert(t('error.unexpected'));
+    } finally {
+        setIsExporting(false);
     }
-    setIsExporting(false);
   }
 
   if (selectedReport) {

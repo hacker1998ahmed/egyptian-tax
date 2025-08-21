@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import InputField from '../components/InputField';
 import { useTranslation } from '../i18n/context';
+import { generatePdfDataUri, generateAgeReportExcelDataUri, downloadFile } from '../utils/reportGenerator';
 
 const StatCard: React.FC<{ label: string, value: string | number, unit?: string, className?: string, valueClassName?: string }> = ({ label, value, unit, className = '', valueClassName = '' }) => (
     <div className={`bg-gray-200 dark:bg-gray-900/50 p-4 rounded-lg text-center ${className}`}>
@@ -45,6 +46,8 @@ const AgeCalculator: React.FC = () => {
     const { t, language } = useTranslation();
     const [birthDate, setBirthDate] = useState('');
     const [ageData, setAgeData] = useState<any>(null);
+    const reportContentRef = useRef<HTMLDivElement>(null);
+    const [isExporting, setIsExporting] = useState<null | 'pdf' | 'excel'>(null);
 
     useEffect(() => {
         if (!birthDate) {
@@ -108,6 +111,38 @@ const AgeCalculator: React.FC = () => {
 
         return () => clearInterval(interval);
     }, [birthDate, t, language]);
+    
+    const handleDownloadPdf = async () => {
+        if (!reportContentRef.current || isExporting) return;
+        setIsExporting('pdf');
+        try {
+            const uri = await generatePdfDataUri(reportContentRef.current);
+            const filename = `Age-Report-${new Date().toISOString().split('T')[0]}.pdf`;
+            downloadFile(filename, uri, (key) => t(key as any));
+        } catch (error) {
+            console.error("Error during PDF download:", error);
+            alert(t('error.unexpected'));
+        } finally {
+            setIsExporting(null);
+        }
+    }
+
+    const handleDownloadExcel = async () => {
+        if (!ageData || isExporting) return;
+        setIsExporting('excel');
+        try {
+            const uri = await Promise.resolve(generateAgeReportExcelDataUri(ageData, t));
+            const filename = `Age-Report-${new Date().toISOString().split('T')[0]}.xlsx`;
+            downloadFile(filename, uri, (key) => t(key as any));
+        } catch (error) {
+            console.error("Error during Excel download:", error);
+            alert(t('error.unexpected'));
+        } finally {
+            setIsExporting(null);
+        }
+    }
+
+    const resetForm = () => setBirthDate('');
 
     return (
         <div className="max-w-4xl mx-auto animate-fade-in">
@@ -122,12 +157,15 @@ const AgeCalculator: React.FC = () => {
                         onChange={(e) => setBirthDate(e.target.value)}
                         max={new Date().toISOString().slice(0, 16)}
                     />
+                     <button onClick={resetForm} className="w-full bg-gray-500 dark:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 focus:outline-none focus:ring-4 focus:ring-gray-400/50 transition-all duration-300 shadow-lg self-end">
+                        {t('calculator.clear')}
+                    </button>
                  </div>
             </div>
 
             {ageData && !ageData.error && (
-                <div className="mt-8 space-y-8 animate-fade-in">
-                    
+                <>
+                <div ref={reportContentRef} className="mt-8 space-y-8 animate-fade-in printable-area bg-gray-100 dark:bg-gray-900 p-4 md:p-8 rounded-lg">
                     {/* Your Age Now */}
                     <div className="bg-white dark:bg-gray-800/50 p-6 rounded-lg border border-gray-200 dark:border-fuchsia-500/30">
                         <h3 className="text-2xl font-bold text-fuchsia-700 dark:text-fuchsia-400 mb-4 text-center">{t('age.results.exactAge')}</h3>
@@ -178,6 +216,16 @@ const AgeCalculator: React.FC = () => {
                          </p>
                     </div>
                 </div>
+
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 justify-center gap-4 no-print">
+                    <button onClick={handleDownloadPdf} disabled={!!isExporting} className="bg-teal-600 dark:bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 dark:hover:bg-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-300/50 transition-all duration-300 shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {isExporting === 'pdf' ? t('report.downloadingPdf') : t('age.export.pdf')}
+                    </button>
+                    <button onClick={handleDownloadExcel} disabled={!!isExporting} className="bg-green-700 dark:bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-800 dark:hover:bg-green-500 focus:outline-none focus:ring-4 focus:ring-green-400/50 transition-all duration-300 shadow-lg shadow-green-600/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {isExporting === 'excel' ? t('report.downloadingExcel') : t('age.export.excel')}
+                    </button>
+                </div>
+                </>
             )}
             {ageData?.error && (
                  <div className="mt-8 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-300 p-4 rounded-lg text-center animate-fade-in">

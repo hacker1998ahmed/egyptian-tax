@@ -216,3 +216,152 @@ export const generateHistoryExcelDataUri = (history: CalculationRecord[], t: (ke
     return null;
   }
 };
+
+export const generateAgeReportExcelDataUri = (ageData: any, t: (key: any, ...args: any[]) => string): string | null => {
+  try {
+    const worksheetData = [
+      // Section 1: Exact Age
+      { A: t('age.results.exactAge') },
+      { A: t('age.results.years'), B: ageData.years },
+      { A: t('age.results.months'), B: ageData.months },
+      { A: t('age.results.days'), B: ageData.days },
+      { A: t('age.results.hours'), B: ageData.hours < 0 ? 24 + ageData.hours : ageData.hours },
+      { A: t('age.results.minutes'), B: ageData.minutes < 0 ? 60 + ageData.minutes : ageData.minutes },
+      { A: t('age.results.seconds'), B: ageData.seconds < 0 ? 60 + ageData.seconds : ageData.seconds },
+      {}, // Spacer
+
+      // Section 2: Life Stats
+      { A: t('age.results.lifeStats') },
+      { A: t('age.results.totalDays'), B: ageData.totalDays },
+      { A: t('age.results.totalHours'), B: ageData.totalHours },
+      { A: t('age.results.totalMinutes'), B: ageData.totalMinutes },
+      { A: t('age.results.totalHeartbeats'), B: ageData.totalHeartbeats },
+      { A: t('age.results.totalBreaths'), B: ageData.totalBreaths },
+      {}, // Spacer
+
+      // Section 3: Astro Profile
+      { A: t('age.results.astroProfile') },
+      { A: t('age.results.westernZodiac'), B: t(`zodiac.western.${ageData.westernZodiac}` as any) },
+      { A: t('age.results.chineseZodiac'), B: t(`zodiac.chinese.${ageData.chineseZodiac}` as any) },
+      {}, // Spacer
+
+      // Section 4: Ticking Clock
+      { A: t('age.results.tickingClock') },
+      { A: t('age.results.years'), B: ageData.timeLeft.years },
+      { A: t('age.results.months'), B: ageData.timeLeft.months },
+      { A: t('age.results.days'), B: ageData.timeLeft.days },
+      {}, // Spacer
+      { A: t('age.results.disclaimer').split(':')[0], B: t('age.results.disclaimer').split(':')[1] },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(worksheetData, { skipHeader: true });
+    ws['!cols'] = [{ wch: 30 }, { wch: 30 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Age Report");
+    
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const base64 = arrayBufferToBase64(wbout);
+    return `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
+
+  } catch (error) {
+    console.error("Error generating Age Report Excel data URI:", error);
+    alert("An error occurred while generating the Excel file. Please try again.");
+    return null;
+  }
+};
+
+// --- START OF CORDOVA-COMPATIBLE DOWNLOADER ---
+
+// Helper to convert Data URI to Blob
+const dataUriToBlob = (dataURI: string): Blob => {
+    const byteString = atob(dataURI.split(',')[1]);
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeString });
+};
+
+// Add Cordova plugin types to the global scope to avoid TypeScript errors.
+// This assumes cordova-plugin-file and cordova-plugin-file-opener2 are installed in the project.
+declare global {
+    interface Window {
+        cordova: any;
+        resolveLocalFileSystemURL: any;
+    }
+    var cordova: any; // for cordova.plugins
+}
+
+/**
+ * Handles downloading a file in both web and Cordova environments.
+ * It will save and open the file on mobile, and trigger a standard download on web.
+ * @param filename The name of the file to save.
+ * @param dataUri The data URI of the file content.
+ * @param t Translation function for alerts.
+ */
+export const downloadFile = (filename: string, dataUri: string | null, t: (key: string) => string): void => {
+    if (!dataUri) {
+        console.error("No data URI provided for download.");
+        alert(t('error.unexpected'));
+        return;
+    }
+
+    // Check if running in a Cordova environment
+    if (window.cordova && window.cordova.file) {
+        try {
+            // Cordova environment: Use file plugins
+            const blob = dataUriToBlob(dataUri);
+            // Use externalDataDirectory for Android to save in a public-friendly location
+            const directory = window.cordova.file.externalDataDirectory || window.cordova.file.dataDirectory;
+            
+            window.resolveLocalFileSystemURL(directory, (dirEntry: any) => {
+                dirEntry.getFile(filename, { create: true, exclusive: false }, (fileEntry: any) => {
+                    fileEntry.createWriter((fileWriter: any) => {
+                        fileWriter.onwriteend = () => {
+                            // Use fileOpener2 to open the file
+                            if (window.cordova.plugins && window.cordova.plugins.fileOpener2) {
+                                window.cordova.plugins.fileOpener2.open(
+                                    fileEntry.toURL(),
+                                    blob.type,
+                                    {
+                                        error: (e: any) => console.error('Error opening file:', e),
+                                        success: () => console.log('File opened successfully')
+                                    }
+                                );
+                            } else {
+                                // Fallback alert if fileOpener2 is not available
+                                alert(`File saved to: ${fileEntry.toURL()}`);
+                            }
+                        };
+
+                        fileWriter.onerror = (e: any) => {
+                            console.error('Error writing file:', e);
+                            alert(t('error.unexpected'));
+                        };
+
+                        fileWriter.write(blob);
+                    });
+                }, (err: any) => {
+                    console.error("Error getting file:", err);
+                    alert(t('error.unexpected'));
+                });
+            }, (err: any) => {
+                console.error("Error resolving directory:", err);
+                alert(t('error.unexpected'));
+            });
+        } catch (e) {
+            console.error("Cordova file operation failed:", e);
+            alert(t('error.unexpected'));
+        }
+    } else {
+        // Web browser environment: Use link click method
+        const link = document.createElement("a");
+        link.href = dataUri;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+};

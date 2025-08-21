@@ -81,10 +81,8 @@ export default {
     "report.downloadPdf": "تحميل PDF",
     "report.downloadExcel": "تحميل Excel",
     "report.printReport": "طباعة التقرير",
-    "report.download.modalTitle": "تحميل تقرير {0}",
-    "report.download.instructions": "ملفك جاهز للتحميل. اضغط على الرابط أدناه لحفظه.",
-    "report.download.linkText": "تحميل {0}",
-    "report.download.altInstructions": "إذا لم يبدأ التحميل تلقائياً، قد تحتاج إلى الضغط المطول على الرابط واختيار 'حفظ الرابط' أو 'مشاركة الرابط'.",
+    "report.downloadingPdf": "جاري إنشاء PDF...",
+    "report.downloadingExcel": "جاري إنشاء Excel...",
 
     "settings.title": "الإعدادات والمعلومات",
     "settings.theme.title": "مظهر التطبيق",
@@ -114,7 +112,7 @@ export default {
     "error.invalidRevenue": "الرجاء إدخال قيمة صحيحة وموجبة للإيرادات.",
     "error.invalidExpenses": "الرجاء إدخال قيمة صحيحة للمصروفات.",
     "error.expensesVsRevenue": "المصروفات لا يمكن أن تكون أكبر من الإيرادات.",
-    "error.unexpected": "حدث خطأ غير متوقع.",
+    "error.unexpected": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
     "error.gemini.parsing": "فشل في تحليل الاستجابة من الخادم. قد يكون هناك مشكلة في تنسيق البيانات.",
     "error.gemini.generic": "حدث خطأ أثناء الاتصال بخبير الضرائب الرقمي. يرجى المحاولة مرة أخرى.",
 
@@ -345,6 +343,8 @@ export default {
     "age.results.totalBreaths": "عدد الأنفاس (تقريبي)",
     "age.results.tickingClock": "ساعة الموت",
     "age.results.disclaimer": "إخلاء مسؤولية: هذا التقدير يعتمد على متوسطات عامة عالمية وهو لأغراض فلسفية وتأملية فقط، ولا يمثل توقعًا علميًا أو طبيًا لحياتك.",
+    "age.export.pdf": "تصدير PDF",
+    "age.export.excel": "تصدير Excel",
 
     "zodiac.western.capricorn": "الجدي",
     "zodiac.western.aquarius": "الدلو",

@@ -81,10 +81,8 @@ export default {
     "report.downloadPdf": "Download PDF",
     "report.downloadExcel": "Download Excel",
     "report.printReport": "Print Report",
-    "report.download.modalTitle": "Download {0} Report",
-    "report.download.instructions": "Your file is ready to download. Click the link below to save it.",
-    "report.download.linkText": "Download {0}",
-    "report.download.altInstructions": "If the download doesn't start automatically, you may need to long-press the link and choose 'Save Link' or 'Share Link'.",
+    "report.downloadingPdf": "Generating PDF...",
+    "report.downloadingExcel": "Generating Excel...",
 
     "settings.title": "Settings & Information",
     "settings.theme.title": "App Theme",
@@ -114,7 +112,7 @@ export default {
     "error.invalidRevenue": "Please enter a correct and positive value for revenue.",
     "error.invalidExpenses": "Please enter a correct value for expenses.",
     "error.expensesVsRevenue": "Expenses cannot be greater than revenue.",
-    "error.unexpected": "An unexpected error occurred.",
+    "error.unexpected": "An unexpected error occurred. Please try again.",
     "error.gemini.parsing": "Failed to parse the response from the server. There might be an issue with the data format.",
     "error.gemini.generic": "An error occurred while contacting the digital tax expert. Please try again.",
 
@@ -345,6 +343,8 @@ export default {
     "age.results.totalBreaths": "Breaths (est.)",
     "age.results.tickingClock": "The Ticking Clock",
     "age.results.disclaimer": "Disclaimer: This estimate is based on global general averages and is for philosophical and contemplative purposes only. It does not represent a scientific or medical prediction of your life.",
+    "age.export.pdf": "Export PDF",
+    "age.export.excel": "Export Excel",
 
     "zodiac.western.capricorn": "Capricorn",
     "zodiac.western.aquarius": "Aquarius",
