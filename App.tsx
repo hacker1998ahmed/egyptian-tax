@@ -29,6 +29,7 @@ import ElectricityCalculator from './pages/ElectricityCalculator';
 import BMICalculator from './pages/BMICalculator';
 import InheritanceCalculator from './pages/InheritanceCalculator';
 import CustomsCalculator from './pages/CustomsCalculator';
+import PayrollCalculator from './pages/PayrollCalculator';
 
 
 function AppContent(): React.ReactNode {
@@ -84,6 +85,8 @@ function AppContent(): React.ReactNode {
         return <InheritanceCalculator />;
       case 'customsCalculator':
         return <CustomsCalculator />;
+      case 'payrollCalculator':
+        return <PayrollCalculator />;
       case 'history':
         return <History />;
       case 'askExpert':

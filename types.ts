@@ -134,6 +134,27 @@ export interface CustomsParams {
     category: string;
 }
 
+export interface PayrollParams {
+  grossMonthlySalary: number;
+  allowances: number;
+  deductions: number;
+  year: number;
+}
+
+export interface AmortizationEntry {
+  month: number;
+  payment: number;
+  principal: number;
+  interest: number;
+  remainingBalance: number;
+}
+export interface LoanParams {
+  amount: number;
+  interestRate: number;
+  term: number;
+  loanType: 'amortizing' | 'decreasing';
+}
+
 
 export type CalculationRecordType = 
   'salary' | 
@@ -149,13 +170,15 @@ export type CalculationRecordType =
   'feasibilityStudy' |
   'electricity' |
   'inheritance' |
-  'customs';
+  'customs' |
+  'payroll' |
+  'loan';
 
 export interface CalculationRecord {
   id: string;
   timestamp: string;
   type: CalculationRecordType;
-  params: TaxParams | CorporateTaxParams | VATTaxParams | RealEstateTaxParams | WithholdingTaxParams | SocialInsuranceParams | StampDutyParams | ZakatParams | InvestmentParams | EndOfServiceParams | FeasibilityStudyParams | ElectricityParams | InheritanceParams | CustomsParams;
+  params: TaxParams | CorporateTaxParams | VATTaxParams | RealEstateTaxParams | WithholdingTaxParams | SocialInsuranceParams | StampDutyParams | ZakatParams | InvestmentParams | EndOfServiceParams | FeasibilityStudyParams | ElectricityParams | InheritanceParams | CustomsParams | PayrollParams | LoanParams;
   report: ReportData;
 }
 
@@ -179,6 +202,7 @@ export type Page =
   'bmiCalculator' |
   'inheritanceCalculator' |
   'customsCalculator' |
+  'payrollCalculator' |
   'history' | 
   'settings' | 
   'askExpert' | 

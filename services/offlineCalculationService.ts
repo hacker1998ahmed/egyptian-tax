@@ -1,4 +1,4 @@
-import type { ReportData, CalculationStep, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams } from '../types';
+import type { ReportData, CalculationStep, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams, PayrollParams } from '../types';
 import { SALARY_TAX_BRACKETS, SOCIAL_INSURANCE_PARAMS, ELECTRICITY_BRACKETS } from './taxBrackets';
 
 const formatCurrency = (amount: number, locale = 'ar-EG') => {
@@ -45,6 +45,58 @@ export const getTaxReport = async (params: TaxParams): Promise<ReportData> => {
         totalTax,
         totalInsurance,
         netIncome,
+        applicableLaws: ["قانون ضريبة الدخل رقم 91 لسنة 2005 وتعديلاته.", "قانون التأمينات الاجتماعية رقم 148 لسنة 2019."]
+    };
+};
+
+export const getPayrollReport = async (params: PayrollParams): Promise<ReportData> => {
+    const calculations: CalculationStep[] = [];
+    
+    calculations.push({ description: "الراتب الإجمالي الشهري", amount: formatCurrency(params.grossMonthlySalary) });
+
+    // Social Insurance Calculation
+    const insuranceRules = SOCIAL_INSURANCE_PARAMS[params.year] || SOCIAL_INSURANCE_PARAMS[2024];
+    const contributionWage = Math.max(insuranceRules.min, Math.min(params.grossMonthlySalary, insuranceRules.max));
+    const monthlyInsurance = contributionWage * insuranceRules.employeeRate;
+    calculations.push({ description: "خصم حصة العامل في التأمينات", amount: formatCurrency(-monthlyInsurance) });
+
+    // Income Tax Calculation
+    const annualGross = params.grossMonthlySalary * 12;
+    const annualInsurance = monthlyInsurance * 12;
+    const incomeAfterInsurance = annualGross - annualInsurance;
+    
+    const brackets = SALARY_TAX_BRACKETS[params.year] || SALARY_TAX_BRACKETS[2024];
+    const taxableIncome = Math.max(0, incomeAfterInsurance - brackets.personalExemption);
+    
+    let annualTax = 0;
+    let remainingIncome = taxableIncome;
+    
+    for (const bracket of brackets.brackets) {
+        if (remainingIncome <= 0) break;
+        const annualTaxableInBracket = Math.min(remainingIncome, bracket.upTo);
+        const taxInBracket = annualTaxableInBracket * bracket.rate;
+        annualTax += taxInBracket;
+        remainingIncome -= annualTaxableInBracket;
+    }
+    const monthlyTax = annualTax / 12;
+    calculations.push({ description: "خصم ضريبة كسب العمل الشهرية", amount: formatCurrency(-monthlyTax) });
+    
+    if(params.allowances > 0) {
+        calculations.push({ description: "إضافة بدلات ومزايا أخرى", amount: formatCurrency(params.allowances) });
+    }
+    if(params.deductions > 0) {
+        calculations.push({ description: "خصم استقطاعات أخرى", amount: formatCurrency(-params.deductions) });
+    }
+
+    const netSalary = params.grossMonthlySalary - monthlyInsurance - monthlyTax + params.allowances - params.deductions;
+    
+    return {
+        summary: `بناءً على راتب شهري إجمالي قدره ${formatCurrency(params.grossMonthlySalary)}, وبعد حساب التأمينات والضرائب، يكون صافي الراتب المستحق هو ${formatCurrency(netSalary)}.`,
+        calculations,
+        grossIncome: params.grossMonthlySalary,
+        totalTax: monthlyTax,
+        totalInsurance: monthlyInsurance,
+        netIncome: netSalary,
         applicableLaws: ["قانون ضريبة الدخل رقم 91 لسنة 2005 وتعديلاته.", "قانون التأمينات الاجتماعية رقم 148 لسنة 2019."]
     };
 };

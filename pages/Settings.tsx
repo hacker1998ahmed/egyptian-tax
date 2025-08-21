@@ -23,12 +23,24 @@ const Settings: React.FC<SettingsProps> = ({ setActivePage, theme, setTheme }) =
       <p>
         {t('settings.about.modal.p1')}
       </p>
-      <h3 className="text-xl font-bold text-cyan-700 dark:text-cyan-400 mt-6">{t('settings.about.modal.developerTitle')}</h3>
-      <ul className="space-y-2">
-        <li><strong>{t('settings.about.modal.name')}:</strong> {DEVELOPER_INFO.name}</li>
-        <li><strong>{t('settings.about.modal.phone')}:</strong> <a href={`tel:${DEVELOPER_INFO.phone}`} className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">{DEVELOPER_INFO.phone}</a></li>
-        <li><strong>{t('settings.about.modal.email')}:</strong> <a href={`mailto:${DEVELOPER_INFO.email}`} className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">{DEVELOPER_INFO.email}</a></li>
-      </ul>
+      
+      <div className="pt-4 border-t border-gray-200 dark:border-cyan-500/20">
+        <h3 className="text-xl font-bold text-cyan-700 dark:text-cyan-400">{t('settings.about.modal.developerGroupTitle')}</h3>
+        <p>
+          <a href="https://www.facebook.com/profile.php?id=100049475271023&sk=followers" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors font-bold">
+            {t('settings.about.modal.developerGroupName')}
+          </a>
+        </p>
+      </div>
+
+      <div className="pt-4 border-t border-gray-200 dark:border-cyan-500/20">
+        <h3 className="text-xl font-bold text-cyan-700 dark:text-cyan-400">{t('settings.about.modal.developerTitle')}</h3>
+        <ul className="space-y-2">
+            <li><strong>{t('settings.about.modal.name')}:</strong> {DEVELOPER_INFO.name}</li>
+            <li><strong>{t('settings.about.modal.phone')}:</strong> <a href={`tel:${DEVELOPER_INFO.phone}`} className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">{DEVELOPER_INFO.phone}</a></li>
+            <li><strong>{t('settings.about.modal.email')}:</strong> <a href={`mailto:${DEVELOPER_INFO.email}`} className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">{DEVELOPER_INFO.email}</a></li>
+        </ul>
+      </div>
     </div>
   );
 

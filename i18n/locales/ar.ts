@@ -10,7 +10,9 @@ export default {
     "dashboard.title": "اختر الحاسبة المطلوبة",
     "dashboard.subtitle": "نقدم لك مجموعة شاملة من الأدوات الضريبية، المالية، والحياتية.",
     "dashboard.salary.title": "ضريبة الدخل على المرتبات",
-    "dashboard.salary.description": "احسب ضريبة الدخل على الأجور والمرتبات للموظفين.",
+    "dashboard.salary.description": "احسب ضريبة الدخل السنوية على الأجور والمرتبات.",
+    "dashboard.payroll.title": "حاسبة الرواتب (Payroll)",
+    "dashboard.payroll.description": "إعداد كشف المرتب الشهري وحساب صافي الراتب للموظف.",
     "dashboard.corporate.title": "ضريبة أرباح الشركات والمنشآت",
     "dashboard.corporate.description": "حساب ضريبة الأرباح التجارية والصناعية للشركات والمنشآت.",
     "dashboard.vat.title": "ضريبة القيمة المضافة (VAT)",
@@ -24,11 +26,11 @@ export default {
     "dashboard.stampDuty.title": "ضريبة الدمغة",
     "dashboard.stampDuty.description": "حساب ضريبة الدمغة على أنواع مختلفة من العقود والمحررات.",
     "dashboard.loan.title": "حاسبة القروض",
-    "dashboard.loan.description": "احسب القسط الشهري والفائدة الإجمالية لأي قرض.",
+    "dashboard.loan.description": "احسب القسط الشهري وجدول السداد التفصيلي لأي قرض.",
     "dashboard.scientific.title": "الآلة الحاسبة العلمية",
     "dashboard.scientific.description": "آلة حاسبة متقدمة لجميع المعادلات المعقدة.",
-    "dashboard.age.title": "حاسبة العمر والحياة",
-    "dashboard.age.description": "اكتشف عمرك الدقيق وإحصائيات شيقة عن حياتك.",
+    "dashboard.age.title": "بوابة الحياة الزمنية",
+    "dashboard.age.description": "اكتشف عمرك بالثانية وإحصائيات مذهلة عن حياتك.",
     "dashboard.zakat.title": "حاسبة الزكاة",
     "dashboard.zakat.description": "احسب زكاة المال بدقة وفقًا للشريعة الإسلامية.",
     "dashboard.investment.title": "حاسبة الاستثمار والتوفير",
@@ -54,14 +56,15 @@ export default {
     "common.year": "سنة",
     "common.month": "شهر",
     "common.day": "يوم",
+    "common.locale": "ar-EG",
 
-    "calculator.calculate": "احسب وأنشئ التقرير",
+    "calculator.calculate": "احسب",
     "calculator.calculating": "جاري الحساب...",
     "calculator.clear": "مسح البيانات",
     "calculator.back": "رجوع",
     "calculator.error.title": "حدث خطأ",
-    "calculator.welcome.title": "أهلاً بك في حاسبة الضرائب المصرية",
-    "calculator.welcome.subtitle": "هذه الأداة الذكية تساعدك على حساب الضرائب والتأمينات المستحقة عليك بدقة وسهولة. املأ النموذج أعلاه بالبيانات المطلوبة، ثم اضغط على زر \"احسب وأنشئ التقرير\" للحصول على تحليل كامل ومفصل.",
+    "calculator.welcome.title": "أهلاً بك",
+    "calculator.welcome.subtitle": "هذه الأداة الذكية تساعدك على إجراء حسابات دقيقة وإنشاء تقارير مفصلة. املأ النموذج أعلاه بالبيانات المطلوبة، ثم اضغط على زر \"احسب\" للحصول على النتائج.",
 
     "report.incomeAnalysis": "تحليل الدخل",
     "report.summary": "ملخص التقرير",
@@ -75,12 +78,13 @@ export default {
     "report.stepDescription": "البيان",
     "report.stepAmount": "المبلغ / القيمة",
     "report.applicableLaws": "القوانين والمواد المطبقة",
-    "report.print.button": "طباعة",
     "report.downloadPdf": "تحميل PDF",
     "report.downloadExcel": "تحميل Excel",
-    "report.print.title": "تقرير الضرائب والتأمينات",
-    "report.print.generatedBy": "تم إنشاؤه بواسطة: {0}",
-    "report.print.developer": "المطور",
+    "report.printReport": "طباعة التقرير",
+    "report.download.modalTitle": "تحميل تقرير {0}",
+    "report.download.instructions": "ملفك جاهز للتحميل. اضغط على الرابط أدناه لحفظه.",
+    "report.download.linkText": "تحميل {0}",
+    "report.download.altInstructions": "إذا لم يبدأ التحميل تلقائياً، قد تحتاج إلى الضغط المطول على الرابط واختيار 'حفظ الرابط' أو 'مشاركة الرابط'.",
 
     "settings.title": "الإعدادات والمعلومات",
     "settings.theme.title": "مظهر التطبيق",
@@ -95,6 +99,8 @@ export default {
     "settings.about.modal.name": "الاسم",
     "settings.about.modal.phone": "الهاتف",
     "settings.about.modal.email": "البريد الإلكتروني",
+    "settings.about.modal.developerGroupTitle": "المجموعة الاحترافية",
+    "settings.about.modal.developerGroupName": "المحترف للاستشارات الضريبية والقانونية",
     "settings.privacy.title": "سياسة الخصوصية",
     "settings.privacy.description": "كيف نتعامل مع بياناتك.",
     "settings.privacy.modal.title": "سياسة الخصوصية",
@@ -112,12 +118,22 @@ export default {
     "error.gemini.parsing": "فشل في تحليل الاستجابة من الخادم. قد يكون هناك مشكلة في تنسيق البيانات.",
     "error.gemini.generic": "حدث خطأ أثناء الاتصال بخبير الضرائب الرقمي. يرجى المحاولة مرة أخرى.",
 
-    "history.title": "سجل التقارير",
+    "history.title": "سجل العمليات",
     "history.clearAll": "مسح السجل",
     "history.empty.title": "لا توجد أي سجلات محفوظة حتى الآن.",
-    "history.empty.subtitle": "قم بإنشاء تقرير جديد من إحدى الحاسبات وسيظهر هنا تلقائيًا.",
+    "history.empty.subtitle": "قم بإجراء عملية حسابية جديدة وسيظهر سجلها هنا تلقائيًا.",
     "history.confirmDelete": "هل أنت متأكد من رغبتك في حذف هذا السجل؟",
     "history.confirmDeleteAll": "هل أنت متأكد من رغبتك في حذف جميع السجلات؟ لا يمكن التراجع عن هذا الإجراء.",
+    "history.export.button": "تصدير الكل إلى Excel",
+    "history.export.exporting": "جاري التصدير...",
+    "history.export.id": "المعرف",
+    "history.export.timestamp": "الوقت",
+    "history.export.type": "نوع العملية",
+    "history.export.gross": "الإجمالي",
+    "history.export.tax": "الضريبة/الرسوم",
+    "history.export.insurance": "التأمينات",
+    "history.export.net": "الصافي/النتيجة",
+    "history.export.params": "المدخلات",
     "history.item.grossIncome": "الدخل الإجمالي",
     "history.item.netIncome": "صافي الدخل",
     "history.item.revenue": "الإيرادات",
@@ -129,6 +145,7 @@ export default {
     "history.item.view": "عرض",
     "history.item.delete": "حذف",
     "history.item.salary.title": "تقرير ضريبة مرتبات لسنة {0}",
+    "history.item.payroll.title": "بيان راتب لسنة {0}",
     "history.item.corporate.title": "تقرير ضريبة شركات لسنة {0}",
     "history.item.corporate.law": "النظام المطبق",
     "history.item.vat.title": "إقرار ق.م. - {0} {1}",
@@ -163,6 +180,9 @@ export default {
     "history.item.customs.title": "تقرير جمارك تقديري",
     "history.item.customs.shipmentValue": "قيمة الشحنة",
     "history.item.customs.totalFees": "إجمالي الرسوم المقدرة",
+    "history.item.loan.title": "تقرير حساب قرض",
+    "history.item.loan.amount": "مبلغ القرض",
+    "history.item.loan.totalPayment": "إجمالي السداد",
 
     "month.1": "يناير",
     "month.2": "فبراير",
@@ -214,12 +234,19 @@ export default {
     "stampDutyType.insurance_premiums": "أقساط التأمين",
     "stampDutyType.bank_transactions": "التعاملات البنكية",
 
-    "salary.title": "حاسبة ضريبة الدخل على المرتبات",
+    "salary.title": "حاسبة ضريبة الدخل السنوية",
     "salary.form.income.label": "الدخل السنوي الإجمالي (بالجنيه المصري)",
     "salary.form.income.placeholder": "مثال: 120000",
     "salary.form.year.label": "سنة المحاسبة",
     "salary.form.taxType.label": "نوع الضريبة",
     "salary.form.insuranceType.label": "نوع التأمينات",
+    
+    "payroll.title": "حاسبة الرواتب الشهرية",
+    "payroll.form.gross.label": "الراتب الإجمالي الشهري",
+    "payroll.form.gross.placeholder": "مثال: 10000",
+    "payroll.form.allowances.label": "البدلات والمزايا الإضافية",
+    "payroll.form.deductions.label": "الاستقطاعات الأخرى",
+    "payroll.form.note": "سيتم حساب التأمينات وضريبة كسب العمل تلقائيًا.",
     
     "corporate.title": "حاسبة ضريبة أرباح الشركات والمنشآت",
     "corporate.form.law.label": "النظام الضريبي المطبق",
@@ -277,36 +304,97 @@ export default {
     "loan.form.interest.placeholder": "مثال: 15.5",
     "loan.form.term.label": "مدة القرض (بالسنوات)",
     "loan.form.term.placeholder": "مثال: 5",
+    "loan.form.type.label": "طريقة السداد",
+    "loan.type.amortizing": "القسط الثابت",
+    "loan.type.decreasing": "القسط المتناقص",
     "loan.results.title": "نتائج حساب القرض",
-    "loan.results.monthlyPayment": "القسط الشهري",
-    "loan.results.totalInterest": "إجمالي الفائدة المدفوعة",
-    "loan.results.totalPayment": "إجمالي المبلغ المدفوع",
+    "loan.results.monthlyPayment": "القسط الشهري الثابت",
+    "loan.results.firstPayment": "القسط الأول",
+    "loan.results.lastPayment": "القسط الأخير",
+    "loan.results.totalInterest": "إجمالي الفائدة",
+    "loan.results.totalPayment": "إجمالي السداد",
+    "loan.schedule.title": "جدول سداد الأقساط",
+    "loan.schedule.month": "الشهر",
+    "loan.schedule.payment": "القسط",
+    "loan.schedule.principal": "أصل الدين",
+    "loan.schedule.interest": "الفائدة",
+    "loan.schedule.balance": "الرصيد المتبقي",
 
     "scientific.title": "الآلة الحاسبة العلمية",
     "scientific.error": "خطأ",
 
-    "age.title": "حاسبة العمر والحياة",
-    "age.form.dob.label": "أدخل تاريخ ميلادك",
+    "age.title": "بوابة الحياة الزمنية",
+    "age.form.dob.label": "أدخل تاريخ ووقت ميلادك",
     "age.error.futureDate": "تاريخ الميلاد لا يمكن أن يكون في المستقبل.",
-    "age.error.invalidDate": "تاريخ غير صالح.",
-    "age.results.exactAge": "عمرك الدقيق هو",
+    "age.error.invalidDate": "تاريخ أو وقت غير صالح.",
+    "age.results.exactAge": "عمرك الآن",
     "age.results.years": "سنوات",
     "age.results.months": "أشهر",
     "age.results.days": "أيام",
-    "age.results.nextBirthday": "عيد ميلادك القادم بعد",
-    "age.results.remainingDays": "الأيام المتبقية",
-    "age.results.lifeStats": "إحصائيات حياتك",
+    "age.results.hours": "ساعات",
+    "age.results.minutes": "دقائق",
+    "age.results.seconds": "ثواني",
+    "age.results.astroProfile": "ملفك الفلكي",
+    "age.results.westernZodiac": "البرج الشمسي",
+    "age.results.chineseZodiac": "البرج الصيني",
+    "age.results.lifeStats": "حياتك في أرقام",
     "age.results.totalDays": "إجمالي الأيام",
     "age.results.totalHours": "إجمالي الساعات",
     "age.results.totalMinutes": "إجمالي الدقائق",
-    "age.results.lifeExpectancy": "تقدير العمر المتوقع",
-    "age.results.yearsLeft": "السنوات المتبقية (تقديريًا)",
-    "age.results.disclaimer": "إخلاء مسؤولية: هذا التقدير يعتمد على متوسطات عامة وهو لأغراض التسلية فقط ولا يمثل توقعًا علميًا أو طبيًا لحياتك.",
-    "age.form.gender.label": "الجنس",
-    "age.gender.male": "ذكر",
-    "age.gender.female": "أنثى",
-    "age.results.dod": "تاريخ الوفاة المتوقع (تقديريًا)",
-    "age.results.timeLeft": "الوقت المتبقي في الحياة (تقديريًا)",
+    "age.results.totalHeartbeats": "نبضات القلب (تقريبي)",
+    "age.results.totalBreaths": "عدد الأنفاس (تقريبي)",
+    "age.results.tickingClock": "ساعة الموت",
+    "age.results.disclaimer": "إخلاء مسؤولية: هذا التقدير يعتمد على متوسطات عامة عالمية وهو لأغراض فلسفية وتأملية فقط، ولا يمثل توقعًا علميًا أو طبيًا لحياتك.",
+
+    "zodiac.western.capricorn": "الجدي",
+    "zodiac.western.aquarius": "الدلو",
+    "zodiac.western.pisces": "الحوت",
+    "zodiac.western.aries": "الحمل",
+    "zodiac.western.taurus": "الثور",
+    "zodiac.western.gemini": "الجوزاء",
+    "zodiac.western.cancer": "السرطان",
+    "zodiac.western.leo": "الأسد",
+    "zodiac.western.virgo": "العذراء",
+    "zodiac.western.libra": "الميزان",
+    "zodiac.western.scorpio": "العقرب",
+    "zodiac.western.sagittarius": "القوس",
+    "zodiac.western.icon.capricorn": "♑",
+    "zodiac.western.icon.aquarius": "♒",
+    "zodiac.western.icon.pisces": "♓",
+    "zodiac.western.icon.aries": "♈",
+    "zodiac.western.icon.taurus": "♉",
+    "zodiac.western.icon.gemini": "♊",
+    "zodiac.western.icon.cancer": "♋",
+    "zodiac.western.icon.leo": "♌",
+    "zodiac.western.icon.virgo": "♍",
+    "zodiac.western.icon.libra": "♎",
+    "zodiac.western.icon.scorpio": "♏",
+    "zodiac.western.icon.sagittarius": "♐",
+
+    "zodiac.chinese.rat": "الفأر",
+    "zodiac.chinese.ox": "الثور",
+    "zodiac.chinese.tiger": "النمر",
+    "zodiac.chinese.rabbit": "الأرنب",
+    "zodiac.chinese.dragon": "التنين",
+    "zodiac.chinese.snake": "الأفعى",
+    "zodiac.chinese.horse": "الحصان",
+    "zodiac.chinese.goat": "الماعز",
+    "zodiac.chinese.monkey": "القرد",
+    "zodiac.chinese.rooster": "الديك",
+    "zodiac.chinese.dog": "الكلب",
+    "zodiac.chinese.pig": "الخنزير",
+    "zodiac.chinese.icon.rat": "🐀",
+    "zodiac.chinese.icon.ox": "🐂",
+    "zodiac.chinese.icon.tiger": "🐅",
+    "zodiac.chinese.icon.rabbit": "🐇",
+    "zodiac.chinese.icon.dragon": "🐉",
+    "zodiac.chinese.icon.snake": "🐍",
+    "zodiac.chinese.icon.horse": "🐎",
+    "zodiac.chinese.icon.goat": "🐐",
+    "zodiac.chinese.icon.monkey": "🐒",
+    "zodiac.chinese.icon.rooster": "🐓",
+    "zodiac.chinese.icon.dog": "🐕",
+    "zodiac.chinese.icon.pig": "🐖",
 
     "askExpert.title": "اسأل الخبير الضريبي",
     "askExpert.placeholder": "اكتب سؤالك هنا...",

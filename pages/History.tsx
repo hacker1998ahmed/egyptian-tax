@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
-import type { CalculationRecord, ReportData, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams } from '../types';
+import type { CalculationRecord, ReportData, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams, LoanParams, PayrollParams } from '../types';
 import ReportDisplay from '../components/ReportDisplay';
 import { CORPORATE_TAX_LAWS } from '../constants';
 import { useTranslation, TranslationKey } from '../i18n/context';
+import { generateHistoryExcelDataUri } from '../utils/reportGenerator';
 
 const HistoryItem: React.FC<{ record: CalculationRecord; onView: () => void; onDelete: () => void; }> = ({ record, onView, onDelete }) => {
   const { t, language } = useTranslation();
@@ -29,6 +30,12 @@ const HistoryItem: React.FC<{ record: CalculationRecord; onView: () => void; onD
       summaryLine1 = `${t('history.item.grossIncome')}: ${formatCurrency((params as TaxParams).income)}`;
       summaryLine2 = `${t('history.item.netIncome')}: ${formatCurrency(record.report.netIncome)}`;
       break;
+    case 'payroll':
+       const pPayroll = params as PayrollParams;
+       title = t('history.item.payroll.title', pPayroll.year);
+       summaryLine1 = `${t('history.item.grossIncome')}: ${formatCurrency(pPayroll.grossMonthlySalary)}`;
+       summaryLine2 = `${t('history.item.netIncome')}: ${formatCurrency(record.report.netIncome)}`;
+       break;
     case 'corporate':
       const pCorp = params as CorporateTaxParams;
       const lawLabel = t(CORPORATE_TAX_LAWS.find(l => l.value === pCorp.law)?.labelKey as TranslationKey) || t('common.undefined');
@@ -105,6 +112,12 @@ const HistoryItem: React.FC<{ record: CalculationRecord; onView: () => void; onD
        summaryLine1 = `${t('history.item.customs.shipmentValue')}: ${formatCurrency((params as CustomsParams).shipmentValue)}`;
        summaryLine2 = `${t('history.item.customs.totalFees')}: ${formatCurrency(record.report.totalTax)}`;
        break;
+    case 'loan':
+       const pLoan = params as LoanParams;
+       title = t('history.item.loan.title');
+       summaryLine1 = `${t('history.item.loan.amount')}: ${formatCurrency(pLoan.amount)}`;
+       summaryLine2 = `${t('history.item.loan.totalPayment')}: ${formatCurrency(record.report.netIncome)}`;
+       break;
   }
 
 
@@ -139,6 +152,7 @@ const History: React.FC = () => {
   const { t } = useTranslation();
   const [history, setHistory] = useLocalStorage<CalculationRecord[]>('taxHistory', []);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleDelete = (id: string) => {
     if (window.confirm(t('history.confirmDelete'))) {
@@ -152,6 +166,21 @@ const History: React.FC = () => {
     }
   }
   
+  const handleExportAllToExcel = () => {
+    if(isExporting) return;
+    setIsExporting(true);
+    const uri = generateHistoryExcelDataUri(sortedHistory, t);
+    if (uri) {
+      const link = document.createElement("a");
+      link.href = uri;
+      link.download = `Calculation-History-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    setIsExporting(false);
+  }
+
   if (selectedReport) {
     return <ReportDisplay data={selectedReport} onBack={() => setSelectedReport(null)} />;
   }
@@ -160,19 +189,30 @@ const History: React.FC = () => {
 
   return (
     <div className="animate-fade-in max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 gap-2">
         <h2 className="text-3xl font-bold text-fuchsia-700 dark:text-fuchsia-400" style={{ textShadow: 'var(--history-header-shadow)' }}>
           <style>{`.dark h2 { --history-header-shadow: 0 0 5px #e879f9; }`}</style>
           {t('history.title')}
         </h2>
-        {history.length > 0 && (
-          <button
-            onClick={handleClearHistory}
-            className="bg-red-700 dark:bg-red-800 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-800 dark:hover:bg-red-700 transition-colors text-sm"
-          >
-            {t('history.clearAll')}
-          </button>
-        )}
+        <div className="flex gap-2">
+            {history.length > 0 && (
+                <button
+                    onClick={handleExportAllToExcel}
+                    disabled={isExporting}
+                    className="bg-green-700 dark:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-800 dark:hover:bg-green-500 transition-colors text-sm disabled:opacity-50"
+                >
+                    {isExporting ? t('history.export.exporting') : t('history.export.button')}
+                </button>
+            )}
+            {history.length > 0 && (
+            <button
+                onClick={handleClearHistory}
+                className="bg-red-700 dark:bg-red-800 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-800 dark:hover:bg-red-700 transition-colors text-sm"
+            >
+                {t('history.clearAll')}
+            </button>
+            )}
+        </div>
       </div>
 
       {history.length === 0 ? (
