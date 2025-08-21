@@ -30,6 +30,9 @@ import BMICalculator from './pages/BMICalculator';
 import InheritanceCalculator from './pages/InheritanceCalculator';
 import CustomsCalculator from './pages/CustomsCalculator';
 import PayrollCalculator from './pages/PayrollCalculator';
+import CurrencyConverter from './pages/CurrencyConverter';
+import SavingsGoalCalculator from './pages/SavingsGoalCalculator';
+import ProfitMarginCalculator from './pages/ProfitMarginCalculator';
 
 
 function AppContent(): React.ReactNode {
@@ -87,6 +90,12 @@ function AppContent(): React.ReactNode {
         return <CustomsCalculator />;
       case 'payrollCalculator':
         return <PayrollCalculator />;
+      case 'currencyConverter':
+        return <CurrencyConverter />;
+      case 'savingsGoalCalculator':
+        return <SavingsGoalCalculator />;
+      case 'profitMarginCalculator':
+        return <ProfitMarginCalculator />;
       case 'history':
         return <History />;
       case 'askExpert':
@@ -101,9 +110,9 @@ function AppContent(): React.ReactNode {
   };
   
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white flex flex-col selection:bg-cyan-500 selection:text-black transition-colors duration-300">
+    <div className="h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white flex flex-col selection:bg-cyan-500 selection:text-black transition-colors duration-300">
       <Header />
-      <main className="flex-grow container mx-auto p-4 md:p-8 pb-24">
+      <main className="flex-grow container mx-auto p-4 md:p-8 pb-24 overflow-y-auto">
         {renderCurrentPage()}
       </main>
       <BottomNavBar activePage={currentPage} setActivePage={setCurrentPage} />

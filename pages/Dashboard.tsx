@@ -58,7 +58,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActivePage }) => {
         <CalculatorCard 
           title={t('dashboard.socialInsurance.title')}
           description={t('dashboard.socialInsurance.description')}
-          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
           onClick={() => setActivePage('socialInsuranceCalculator')}
         />
          <CalculatorCard 
@@ -68,10 +68,30 @@ const Dashboard: React.FC<DashboardProps> = ({ setActivePage }) => {
           onClick={() => setActivePage('stampDutyCalculator')}
         />
          <CalculatorCard 
+          title={t('dashboard.customs.title')}
+          description={t('dashboard.customs.description')}
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 003.375-3.375h1.5a1.125 1.125 0 011.125 1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-3 4.5a.75.75 0 100-1.5.75.75 0 000 1.5z" /></svg>}
+          onClick={() => setActivePage('customsCalculator')}
+        />
+        <CalculatorCard 
           title={t('dashboard.zakat.title')}
           description={t('dashboard.zakat.description')}
           icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}
           onClick={() => setActivePage('zakatCalculator')}
+        />
+        
+        {/* Financial & Life Tools */}
+        <CalculatorCard 
+          title={t('dashboard.profitMargin.title')}
+          description={t('dashboard.profitMargin.description')}
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5 8.5a7.5 7.5 0 100-15 7.5 7.5 0 000 15z" /></svg>}
+          onClick={() => setActivePage('profitMarginCalculator')}
+        />
+        <CalculatorCard 
+          title={t('dashboard.feasibility.title')}
+          description={t('dashboard.feasibility.description')}
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 100 15 7.5 7.5 0 000-15zM21 21l-5.197-5.197" /></svg>}
+          onClick={() => setActivePage('feasibilityStudyCalculator')}
         />
         <CalculatorCard 
           title={t('dashboard.investment.title')}
@@ -80,16 +100,34 @@ const Dashboard: React.FC<DashboardProps> = ({ setActivePage }) => {
           onClick={() => setActivePage('investmentCalculator')}
         />
         <CalculatorCard 
+          title={t('dashboard.loan.title')}
+          description={t('dashboard.loan.description')}
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9.5V11a5.5 5.5 0 01-11 0V9.5m11 0a2.5 2.5 0 00-5 0m5 0V7.5a2.5 2.5 0 00-5 0V9.5m0 0a2.5 2.5 0 00-5 0m5 0V7.5a2.5 2.5 0 00-5 0v2M12 15.5a2.5 2.5 0 000-5m0 5a2.5 2.5 0 010-5m0 5v2.5m0-2.5a2.5 2.5 0 005 0m-5 0a2.5 2.5 0 01-5 0" /></svg>}
+          onClick={() => setActivePage('loanCalculator')}
+        />
+        <CalculatorCard 
+          title={t('dashboard.savingsGoal.title')}
+          description={t('dashboard.savingsGoal.description')}
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"> <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.82m5.84-2.56a12.022 12.022 0 013.824 5.84M12 6a6 6 0 110 12 6 6 0 010-12z" /> </svg>}
+          onClick={() => setActivePage('savingsGoalCalculator')}
+        />
+        <CalculatorCard 
           title={t('dashboard.endOfService.title')}
           description={t('dashboard.endOfService.description')}
           icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>}
           onClick={() => setActivePage('endOfServiceCalculator')}
         />
         <CalculatorCard 
-          title={t('dashboard.feasibility.title')}
-          description={t('dashboard.feasibility.description')}
-          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 100 15 7.5 7.5 0 000-15zM21 21l-5.197-5.197" /></svg>}
-          onClick={() => setActivePage('feasibilityStudyCalculator')}
+          title={t('dashboard.inheritance.title')}
+          description={t('dashboard.inheritance.description')}
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1.125-1.5M12 16.5l1.125-1.5m-1.125 1.5V14.25m0 2.25v-2.25m0 0l1.125 1.5M12 16.5l-1.125 1.5M12 14.25L10.875 15" /></svg>}
+          onClick={() => setActivePage('inheritanceCalculator')}
+        />
+        <CalculatorCard 
+          title={t('dashboard.currencyConverter.title')}
+          description={t('dashboard.currencyConverter.description')}
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 12L3 8m4 8l4-8m4 8V4m0 12l4-8m-4 8l-4-8m-2 14h14" /></svg>}
+          onClick={() => setActivePage('currencyConverter')}
         />
         <CalculatorCard 
           title={t('dashboard.electricity.title')}
@@ -102,26 +140,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActivePage }) => {
           description={t('dashboard.bmi.description')}
           icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m18 0h-1.5m-15 0a7.5 7.5 0 1115 0m-15 0H3m18 0h-1.5m-15 0a7.5 7.5 0 0115 0m-15 0H3" /></svg>}
           onClick={() => setActivePage('bmiCalculator')}
-        />
-        <CalculatorCard 
-          title={t('dashboard.inheritance.title')}
-          description={t('dashboard.inheritance.description')}
-          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1.125-1.5M12 16.5l1.125-1.5m-1.125 1.5V14.25m0 2.25v-2.25m0 0l1.125 1.5M12 16.5l-1.125 1.5M12 14.25L10.875 15" /></svg>}
-          onClick={() => setActivePage('inheritanceCalculator')}
-        />
-         <CalculatorCard 
-          title={t('dashboard.customs.title')}
-          description={t('dashboard.customs.description')}
-          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 003.375-3.375h1.5a1.125 1.125 0 011.125 1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-3 4.5a.75.75 0 100-1.5.75.75 0 000 1.5z" /></svg>}
-          onClick={() => setActivePage('customsCalculator')}
-        />
-        
-        {/* Financial & Life Tools */}
-        <CalculatorCard 
-          title={t('dashboard.loan.title')}
-          description={t('dashboard.loan.description')}
-          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 9.5V11a5.5 5.5 0 01-11 0V9.5m11 0a2.5 2.5 0 00-5 0m5 0V7.5a2.5 2.5 0 00-5 0V9.5m0 0a2.5 2.5 0 00-5 0m5 0V7.5a2.5 2.5 0 00-5 0v2M12 15.5a2.5 2.5 0 000-5m0 5a2.5 2.5 0 010-5m0 5v2.5m0-2.5a2.5 2.5 0 005 0m-5 0a2.5 2.5 0 01-5 0" /></svg>}
-          onClick={() => setActivePage('loanCalculator')}
         />
         <CalculatorCard 
           title={t('dashboard.scientific.title')}

@@ -155,6 +155,20 @@ export interface LoanParams {
   loanType: 'amortizing' | 'decreasing';
 }
 
+export interface SavingsGoalParams {
+    goalName: string;
+    targetAmount: number;
+    initialDeposit: number;
+    monthlyContribution: number;
+    annualRate: number;
+}
+
+export interface ProfitMarginParams {
+    revenue: number;
+    cogs: number;
+    operatingExpenses: number;
+}
+
 
 export type CalculationRecordType = 
   'salary' | 
@@ -172,13 +186,14 @@ export type CalculationRecordType =
   'inheritance' |
   'customs' |
   'payroll' |
-  'loan';
+  'loan' |
+  'profitMargin';
 
 export interface CalculationRecord {
   id: string;
   timestamp: string;
   type: CalculationRecordType;
-  params: TaxParams | CorporateTaxParams | VATTaxParams | RealEstateTaxParams | WithholdingTaxParams | SocialInsuranceParams | StampDutyParams | ZakatParams | InvestmentParams | EndOfServiceParams | FeasibilityStudyParams | ElectricityParams | InheritanceParams | CustomsParams | PayrollParams | LoanParams;
+  params: TaxParams | CorporateTaxParams | VATTaxParams | RealEstateTaxParams | WithholdingTaxParams | SocialInsuranceParams | StampDutyParams | ZakatParams | InvestmentParams | EndOfServiceParams | FeasibilityStudyParams | ElectricityParams | InheritanceParams | CustomsParams | PayrollParams | LoanParams | SavingsGoalParams | ProfitMarginParams;
   report: ReportData;
 }
 
@@ -203,6 +218,9 @@ export type Page =
   'inheritanceCalculator' |
   'customsCalculator' |
   'payrollCalculator' |
+  'currencyConverter' |
+  'savingsGoalCalculator' |
+  'profitMarginCalculator' |
   'history' | 
   'settings' | 
   'askExpert' | 

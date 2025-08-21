@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
-import type { CalculationRecord, ReportData, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams, LoanParams, PayrollParams } from '../types';
+import type { CalculationRecord, ReportData, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams, LoanParams, PayrollParams, SavingsGoalParams, ProfitMarginParams } from '../types';
 import ReportDisplay from '../components/ReportDisplay';
 import { CORPORATE_TAX_LAWS } from '../constants';
 import { useTranslation, TranslationKey } from '../i18n/context';
@@ -117,6 +117,13 @@ const HistoryItem: React.FC<{ record: CalculationRecord; onView: () => void; onD
        title = t('history.item.loan.title');
        summaryLine1 = `${t('history.item.loan.amount')}: ${formatCurrency(pLoan.amount)}`;
        summaryLine2 = `${t('history.item.loan.totalPayment')}: ${formatCurrency(record.report.netIncome)}`;
+       break;
+    case 'profitMargin':
+       const pMargin = params as ProfitMarginParams;
+       title = t('history.item.profitMargin.title');
+       summaryLine1 = `${t('history.item.revenue')}: ${formatCurrency(pMargin.revenue)}`;
+       const netMargin = record.report.grossIncome > 0 ? (record.report.netIncome / record.report.grossIncome * 100).toFixed(2) : '0.00';
+       summaryLine2 = `${t('history.item.profitMargin.netMargin')}: ${netMargin}%`;
        break;
   }
 

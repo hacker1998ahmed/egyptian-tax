@@ -270,8 +270,6 @@ export const generateAgeReportExcelDataUri = (ageData: any, t: (key: any, ...arg
   }
 };
 
-// --- START OF CORDOVA-COMPATIBLE DOWNLOADER ---
-
 // Helper to convert Data URI to Blob
 const dataUriToBlob = (dataURI: string): Blob => {
     const byteString = atob(dataURI.split(',')[1]);
@@ -284,84 +282,58 @@ const dataUriToBlob = (dataURI: string): Blob => {
     return new Blob([ab], { type: mimeString });
 };
 
-// Add Cordova plugin types to the global scope to avoid TypeScript errors.
-// This assumes cordova-plugin-file and cordova-plugin-file-opener2 are installed in the project.
-declare global {
-    interface Window {
-        cordova: any;
-        resolveLocalFileSystemURL: any;
-    }
-    var cordova: any; // for cordova.plugins
-}
 
 /**
- * Handles downloading a file in both web and Cordova environments.
- * It will save and open the file on mobile, and trigger a standard download on web.
+ * Handles downloading/sharing a file in modern browsers and WebViews.
+ * It will use the Web Share API if available, otherwise it falls back to a standard download link.
  * @param filename The name of the file to save.
  * @param dataUri The data URI of the file content.
  * @param t Translation function for alerts.
  */
-export const downloadFile = (filename: string, dataUri: string | null, t: (key: string) => string): void => {
+export const downloadFile = async (filename: string, dataUri: string | null, t: (key: string) => string): Promise<void> => {
     if (!dataUri) {
         console.error("No data URI provided for download.");
         alert(t('error.unexpected'));
         return;
     }
 
-    // Check if running in a Cordova environment
-    if (window.cordova && window.cordova.file) {
-        try {
-            // Cordova environment: Use file plugins
-            const blob = dataUriToBlob(dataUri);
-            // Use externalDataDirectory for Android to save in a public-friendly location
-            const directory = window.cordova.file.externalDataDirectory || window.cordova.file.dataDirectory;
-            
-            window.resolveLocalFileSystemURL(directory, (dirEntry: any) => {
-                dirEntry.getFile(filename, { create: true, exclusive: false }, (fileEntry: any) => {
-                    fileEntry.createWriter((fileWriter: any) => {
-                        fileWriter.onwriteend = () => {
-                            // Use fileOpener2 to open the file
-                            if (window.cordova.plugins && window.cordova.plugins.fileOpener2) {
-                                window.cordova.plugins.fileOpener2.open(
-                                    fileEntry.toURL(),
-                                    blob.type,
-                                    {
-                                        error: (e: any) => console.error('Error opening file:', e),
-                                        success: () => console.log('File opened successfully')
-                                    }
-                                );
-                            } else {
-                                // Fallback alert if fileOpener2 is not available
-                                alert(`File saved to: ${fileEntry.toURL()}`);
-                            }
-                        };
+    try {
+        const blob = dataUriToBlob(dataUri);
+        const file = new File([blob], filename, { type: blob.type });
 
-                        fileWriter.onerror = (e: any) => {
-                            console.error('Error writing file:', e);
-                            alert(t('error.unexpected'));
-                        };
-
-                        fileWriter.write(blob);
-                    });
-                }, (err: any) => {
-                    console.error("Error getting file:", err);
-                    alert(t('error.unexpected'));
-                });
-            }, (err: any) => {
-                console.error("Error resolving directory:", err);
-                alert(t('error.unexpected'));
+        // Use Web Share API if available and can share files
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: filename,
             });
-        } catch (e) {
-            console.error("Cordova file operation failed:", e);
-            alert(t('error.unexpected'));
+        } else {
+            // Fallback for desktop browsers or unsupported environments
+            const link = document.createElement("a");
+            link.href = dataUri;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
-    } else {
-        // Web browser environment: Use link click method
-        const link = document.createElement("a");
-        link.href = dataUri;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    } catch (error) {
+        // Handle user cancellation of share sheet gracefully
+        if ((error as DOMException).name === 'AbortError') {
+            console.log('Share action was cancelled by the user.');
+        } else {
+            console.error("Error sharing or downloading file:", error);
+            // Fallback to link download if sharing fails for other reasons
+            try {
+                const link = document.createElement("a");
+                link.href = dataUri;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (fallbackError) {
+                console.error("Fallback download failed:", fallbackError);
+                alert(t('error.unexpected'));
+            }
+        }
     }
 };
