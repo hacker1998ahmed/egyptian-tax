@@ -2,16 +2,15 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
 import type { CalculationRecord, ReportData } from '../types';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
-// Helper to convert ArrayBuffer to Base64
-const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
+// Add Capacitor to the window object for TypeScript
+declare global {
+    interface Window {
+        Capacitor?: {
+            isNative?: boolean;
+        };
     }
-    return window.btoa(binary);
 }
 
 export const generatePdfDataUri = async (reportElement: HTMLElement | null): Promise<string | null> => {
@@ -105,8 +104,7 @@ export const generateExcelDataUri = (data: ReportData, headers: ExcelHeaders): s
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Tax Report");
     
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const base64 = arrayBufferToBase64(wbout);
+    const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
     return `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
 
   } catch (error) {
@@ -207,8 +205,7 @@ export const generateHistoryExcelDataUri = (history: CalculationRecord[], t: (ke
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Calculation History");
 
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const base64 = arrayBufferToBase64(wbout);
+    const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
     return `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
   } catch (error) {
     console.error("Error generating history Excel data URI:", error);
@@ -259,8 +256,7 @@ export const generateAgeReportExcelDataUri = (ageData: any, t: (key: any, ...arg
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Age Report");
     
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const base64 = arrayBufferToBase64(wbout);
+    const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
     return `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
 
   } catch (error) {
@@ -270,70 +266,68 @@ export const generateAgeReportExcelDataUri = (ageData: any, t: (key: any, ...arg
   }
 };
 
-// Helper to convert Data URI to Blob
-const dataUriToBlob = (dataURI: string): Blob => {
-    const byteString = atob(dataURI.split(',')[1]);
-    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-    return new Blob([ab], { type: mimeString });
-};
-
-
 /**
- * Handles downloading/sharing a file in modern browsers and WebViews.
- * It will use the Web Share API if available, otherwise it falls back to a standard download link.
+ * Handles downloading a file for web browsers as a fallback.
  * @param filename The name of the file to save.
  * @param dataUri The data URI of the file content.
  * @param t Translation function for alerts.
  */
-export const downloadFile = async (filename: string, dataUri: string | null, t: (key: string) => string): Promise<void> => {
+const downloadFileWeb = (filename: string, dataUri: string, t: (key: string) => string) => {
+     try {
+        const link = document.createElement("a");
+        link.href = dataUri;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (webError) {
+        console.error("Web download failed:", webError);
+        alert(t('error.unexpected'));
+    }
+}
+
+/**
+ * Handles saving/downloading a file.
+ * Uses Capacitor Filesystem API if in a native environment, otherwise falls back to a standard web download.
+ * @param filename The name of the file to save.
+ * @param dataUri The data URI of the file content.
+ * @param t Translation function for alerts.
+ */
+export const downloadFile = async (filename: string, dataUri: string | null, t: (key: any) => string): Promise<void> => {
     if (!dataUri) {
         console.error("No data URI provided for download.");
         alert(t('error.unexpected'));
         return;
     }
 
-    try {
-        const blob = dataUriToBlob(dataUri);
-        const file = new File([blob], filename, { type: blob.type });
+    const isNativePlatform = window.Capacitor?.isNative;
 
-        // Use Web Share API if available and can share files
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                files: [file],
-                title: filename,
-            });
-        } else {
-            // Fallback for desktop browsers or unsupported environments
-            const link = document.createElement("a");
-            link.href = dataUri;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    } catch (error) {
-        // Handle user cancellation of share sheet gracefully
-        if ((error as DOMException).name === 'AbortError') {
-            console.log('Share action was cancelled by the user.');
-        } else {
-            console.error("Error sharing or downloading file:", error);
-            // Fallback to link download if sharing fails for other reasons
-            try {
-                const link = document.createElement("a");
-                link.href = dataUri;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (fallbackError) {
-                console.error("Fallback download failed:", fallbackError);
-                alert(t('error.unexpected'));
+    if (isNativePlatform) {
+        try {
+            // Extract base64 data from data URI
+            const base64Data = dataUri.substring(dataUri.indexOf(',') + 1);
+            if (!base64Data) {
+                throw new Error("Invalid data URI format for base64 extraction.");
             }
+
+            await Filesystem.writeFile({
+                path: filename,
+                data: base64Data,
+                directory: Directory.Documents, // Save to a public, user-accessible directory
+            });
+            
+            alert(t('common.reportSaved'));
+
+        } catch (error) {
+            console.error("Capacitor Filesystem writeFile error:", error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            alert(`${t('error.unexpected')} ${errorMessage}`);
+            // If native saving fails, attempt a web download as a last resort
+            console.log("Falling back to web download method due to native error.");
+            downloadFileWeb(filename, dataUri, t);
         }
+    } else {
+        // This is a web environment, use the standard download method.
+        downloadFileWeb(filename, dataUri, t);
     }
 };

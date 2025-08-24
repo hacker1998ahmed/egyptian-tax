@@ -61,11 +61,25 @@ export interface WithholdingTaxParams {
   year: number;
 }
 
-export interface SocialInsuranceParams {
+export type SocialInsuranceContributionParams = {
+    calculationType: 'contribution';
     basicWage: number;
     variableWage: number;
     year: number;
-}
+};
+export type SocialInsurancePensionParams = {
+    calculationType: 'pension';
+    averageWage: number;
+    contributionYears: number;
+};
+export type SocialInsuranceLumpSumParams = {
+    calculationType: 'lumpSum';
+    averageWage: number;
+    contributionYears: number;
+};
+
+export type SocialInsuranceParams = SocialInsuranceContributionParams | SocialInsurancePensionParams | SocialInsuranceLumpSumParams;
+
 
 export interface StampDutyParams {
     amount: number;

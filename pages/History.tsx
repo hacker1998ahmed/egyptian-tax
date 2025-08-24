@@ -67,10 +67,25 @@ const HistoryItem: React.FC<{ record: CalculationRecord; onView: () => void; onD
        summaryLine2 = `${t('history.item.withholding.taxWithheld')}: ${formatCurrency(record.report.totalTax)}`;
       break;
     case 'socialInsurance':
-       title = t('history.item.socialInsurance.title', (params as SocialInsuranceParams).year);
-       const p = params as SocialInsuranceParams;
-       summaryLine1 = `${t('history.item.socialInsurance.totalWage')}: ${formatCurrency(p.basicWage + p.variableWage)}`;
-       summaryLine2 = `${t('history.item.socialInsurance.totalContribution')}: ${formatCurrency(record.report.totalInsurance)}`;
+       const pSocial = params as SocialInsuranceParams;
+       switch (pSocial.calculationType) {
+           case 'pension':
+                title = t('history.item.socialInsurance.pensionTitle');
+                summaryLine1 = `${t('history.item.socialInsurance.avgWage')}: ${formatCurrency(pSocial.averageWage)}`;
+                summaryLine2 = `${t('history.item.socialInsurance.estimatedPension')}: ${formatCurrency(record.report.netIncome)}`;
+                break;
+           case 'lumpSum':
+                title = t('history.item.socialInsurance.lumpSumTitle');
+                summaryLine1 = `${t('history.item.socialInsurance.contributionYears')}: ${pSocial.contributionYears}`;
+                summaryLine2 = `${t('history.item.socialInsurance.lumpSumAmount')}: ${formatCurrency(record.report.netIncome)}`;
+                break;
+           case 'contribution':
+           default:
+                title = t('history.item.socialInsurance.title', pSocial.year);
+                summaryLine1 = `${t('history.item.socialInsurance.totalWage')}: ${formatCurrency(pSocial.basicWage + pSocial.variableWage)}`;
+                summaryLine2 = `${t('history.item.socialInsurance.totalContribution')}: ${formatCurrency(record.report.totalInsurance)}`;
+                break;
+       }
       break;
     case 'stampDuty':
        title = t('history.item.stampDuty.title', (params as StampDutyParams).year);

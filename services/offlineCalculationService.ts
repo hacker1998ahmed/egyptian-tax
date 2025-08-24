@@ -234,30 +234,79 @@ export const getWithholdingTaxReport = async (params: WithholdingTaxParams): Pro
 };
 
 export const getSocialInsuranceReport = async (params: SocialInsuranceParams): Promise<ReportData> => {
-     const calculations: CalculationStep[] = [];
-     const insuranceRules = SOCIAL_INSURANCE_PARAMS[params.year] || SOCIAL_INSURANCE_PARAMS[2024];
-     const totalMonthlyWage = params.basicWage + params.variableWage;
-     const contributionWage = Math.max(insuranceRules.min, Math.min(totalMonthlyWage, insuranceRules.max));
-     
-     calculations.push({ description: "الأجر الشامل الشهري", amount: formatCurrency(totalMonthlyWage) });
-     calculations.push({ description: "أجر الاشتراك التأميني المعتمد", amount: formatCurrency(contributionWage) });
+    switch (params.calculationType) {
+        case 'contribution': {
+            const calculations: CalculationStep[] = [];
+            const insuranceRules = SOCIAL_INSURANCE_PARAMS[params.year] || SOCIAL_INSURANCE_PARAMS[2024];
+            const totalMonthlyWage = params.basicWage + params.variableWage;
+            const contributionWage = Math.max(insuranceRules.min, Math.min(totalMonthlyWage, insuranceRules.max));
+            
+            calculations.push({ description: "الأجر الشامل الشهري", amount: formatCurrency(totalMonthlyWage) });
+            calculations.push({ description: "أجر الاشتراك التأميني المعتمد", amount: formatCurrency(contributionWage) });
 
-     const employeeShare = contributionWage * insuranceRules.employeeRate;
-     const employerShare = contributionWage * insuranceRules.employerRate;
-     const totalInsurance = employeeShare + employerShare;
-     
-     calculations.push({ description: `حصة العامل (${insuranceRules.employeeRate * 100}%)`, amount: formatCurrency(employeeShare) });
-     calculations.push({ description: `حصة صاحب العمل (${insuranceRules.employerRate * 100}%)`, amount: formatCurrency(employerShare) });
+            const employeeShare = contributionWage * insuranceRules.employeeRate;
+            const employerShare = contributionWage * insuranceRules.employerRate;
+            const totalInsurance = employeeShare + employerShare;
+            
+            calculations.push({ description: `حصة العامل (${insuranceRules.employeeRate * 100}%)`, amount: formatCurrency(employeeShare) });
+            calculations.push({ description: `حصة صاحب العمل (${insuranceRules.employerRate * 100}%)`, amount: formatCurrency(employerShare) });
 
-    return {
-        summary: `إجمالي اشتراك التأمينات الشهري هو ${formatCurrency(totalInsurance)}، مقسمة إلى ${formatCurrency(employeeShare)} حصة العامل و ${formatCurrency(employerShare)} حصة صاحب العمل.`,
-        calculations,
-        grossIncome: totalMonthlyWage,
-        totalTax: 0,
-        totalInsurance: totalInsurance,
-        netIncome: employeeShare, // Representing employee's monthly deduction
-        applicableLaws: ["قانون التأمينات الاجتماعية الموحد رقم 148 لسنة 2019."]
-    };
+            return {
+                summary: `إجمالي اشتراك التأمينات الشهري هو ${formatCurrency(totalInsurance)}، مقسمة إلى ${formatCurrency(employeeShare)} حصة العامل و ${formatCurrency(employerShare)} حصة صاحب العمل.`,
+                calculations,
+                grossIncome: totalMonthlyWage,
+                totalTax: 0,
+                totalInsurance: totalInsurance,
+                netIncome: employeeShare, // Representing employee's monthly deduction
+                applicableLaws: ["قانون التأمينات الاجتماعية الموحد رقم 148 لسنة 2019."]
+            };
+        }
+        case 'pension': {
+            const calculations: CalculationStep[] = [];
+            const pensionCoefficient = 1 / 45; // As per Egyptian law
+            const estimatedPension = params.averageWage * params.contributionYears * pensionCoefficient;
+
+            calculations.push({ description: "متوسط أجر الاشتراك", amount: formatCurrency(params.averageWage) });
+            calculations.push({ description: "عدد سنوات الاشتراك", amount: `${params.contributionYears} سنة` });
+            calculations.push({ description: "معامل حساب المعاش (1/45)", amount: pensionCoefficient.toFixed(4) });
+            calculations.push({ description: "المعاش الشهري الأساسي المقدر", amount: formatCurrency(estimatedPension) });
+
+            // In reality, there are min/max limits and other adjustments, this is a simplified model.
+            return {
+                summary: `بناءً على متوسط أجر ${formatCurrency(params.averageWage)} و ${params.contributionYears} سنة اشتراك، يُقدر المعاش الشهري بحوالي ${formatCurrency(estimatedPension)}. هذا تقدير مبسط وقد تختلف القيمة الفعلية.`,
+                calculations,
+                grossIncome: params.averageWage,
+                totalTax: 0,
+                totalInsurance: 0,
+                netIncome: estimatedPension,
+                applicableLaws: ["قانون التأمينات الاجتماعية الموحد رقم 148 لسنة 2019 (نموذج تقديري)."]
+            };
+        }
+        case 'lumpSum': {
+            const calculations: CalculationStep[] = [];
+            const assumedAnnualReturn = 0.05; // 5% example return on investment
+
+            // Estimate total contributions
+            const totalContributions = params.averageWage * SOCIAL_INSURANCE_PARAMS[2024].employeeRate * 12 * params.contributionYears;
+            calculations.push({ description: "إجمالي الاشتراكات المقدرة", amount: formatCurrency(totalContributions) });
+
+            // Simplified return calculation using compound interest formula's spirit
+            const totalReturn = totalContributions * (Math.pow(1 + assumedAnnualReturn, params.contributionYears) - 1);
+            calculations.push({ description: `العائد الاستثماري المقدر (بمتوسط ${assumedAnnualReturn * 100}%)`, amount: formatCurrency(totalReturn) });
+
+            const lumpSumAmount = totalContributions + totalReturn;
+            
+            return {
+                summary: `للمؤمن عليه الذي لا يستحق معاشًا، يُقدر مبلغ الدفعة الواحدة المستحق بحوالي ${formatCurrency(lumpSumAmount)}، بناءً على الاشتراكات والعائد الاستثماري التقديري.`,
+                calculations,
+                grossIncome: totalContributions,
+                totalTax: 0,
+                totalInsurance: 0,
+                netIncome: lumpSumAmount,
+                applicableLaws: ["قانون التأمينات الاجتماعية الموحد رقم 148 لسنة 2019 (نموذج تقديري)."]
+            };
+        }
+    }
 };
 
 export const getStampDutyReport = async (params: StampDutyParams): Promise<ReportData> => {

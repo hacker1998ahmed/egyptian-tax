@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { TAX_YEARS } from '../constants';
 import { getSocialInsuranceReport } from '../services/offlineCalculationService';
-import type { ReportData, CalculationRecord, SocialInsuranceParams } from '../types';
+import type { ReportData, CalculationRecord, SocialInsuranceParams, SocialInsuranceContributionParams, SocialInsurancePensionParams, SocialInsuranceLumpSumParams } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import InputField from '../components/InputField';
 import SelectField from '../components/SelectField';
@@ -11,12 +11,16 @@ import Welcome from '../components/Welcome';
 import { useTranslation } from '../i18n/context';
 
 type ViewState = 'form' | 'loading' | 'error' | 'report';
+type CalculationType = 'contribution' | 'pension' | 'lumpSum';
 
 const SocialInsuranceCalculator: React.FC = () => {
   const { t } = useTranslation();
-  const [basicWage, setBasicWage] = useState('');
-  const [variableWage, setVariableWage] = useState('');
-  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [calculationType, setCalculationType] = useState<CalculationType>('contribution');
+  
+  // State for all possible forms
+  const [contributionParams, setContributionParams] = useState<Omit<SocialInsuranceContributionParams, 'calculationType'>>({ basicWage: 0, variableWage: 0, year: new Date().getFullYear() });
+  const [pensionParams, setPensionParams] = useState<Omit<SocialInsurancePensionParams, 'calculationType'>>({ averageWage: 0, contributionYears: 0 });
+  const [lumpSumParams, setLumpSumParams] = useState<Omit<SocialInsuranceLumpSumParams, 'calculationType'>>({ averageWage: 0, contributionYears: 0 });
   
   const [report, setReport] = useState<ReportData | null>(null);
   const [viewState, setViewState] = useState<ViewState>('form');
@@ -24,27 +28,32 @@ const SocialInsuranceCalculator: React.FC = () => {
 
   const [, setHistory] = useLocalStorage<CalculationRecord[]>('taxHistory', []);
 
+  const calculationTypeOptions = useMemo(() => [
+    { value: 'contribution', label: t('socialInsurance.form.type.contribution') },
+    { value: 'pension', label: t('socialInsurance.form.type.pension') },
+    { value: 'lumpSum', label: t('socialInsurance.form.type.lumpSum') },
+  ], [t]);
+
   const handleCalculate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    const basicWageNum = parseFloat(basicWage) || 0;
-    const variableWageNum = parseFloat(variableWage) || 0;
-    
-    if (basicWageNum + variableWageNum <= 0) {
-      setError(t('error.unexpected')); // Placeholder, should have specific error key
-      setViewState('error');
-      return;
-    }
-
     setViewState('loading');
     setError(null);
     setReport(null);
 
-    const params: SocialInsuranceParams = {
-      basicWage: basicWageNum,
-      variableWage: variableWageNum,
-      year,
-    };
-
+    let params: SocialInsuranceParams;
+    switch (calculationType) {
+        case 'pension':
+            params = { calculationType, ...pensionParams };
+            break;
+        case 'lumpSum':
+            params = { calculationType, ...lumpSumParams };
+            break;
+        case 'contribution':
+        default:
+            params = { calculationType, ...contributionParams };
+            break;
+    }
+    
     try {
       const data = await getSocialInsuranceReport(params);
       setReport(data);
@@ -64,12 +73,12 @@ const SocialInsuranceCalculator: React.FC = () => {
       setError(errorMessage);
       setViewState('error');
     }
-  }, [basicWage, variableWage, year, setHistory, t]);
+  }, [calculationType, contributionParams, pensionParams, lumpSumParams, setHistory, t]);
   
   const resetForm = () => {
-    setBasicWage('');
-    setVariableWage('');
-    setYear(new Date().getFullYear());
+    setContributionParams({ basicWage: 0, variableWage: 0, year: new Date().getFullYear() });
+    setPensionParams({ averageWage: 0, contributionYears: 0 });
+    setLumpSumParams({ averageWage: 0, contributionYears: 0 });
     setReport(null);
     setError(null);
     setViewState('form');
@@ -80,42 +89,90 @@ const SocialInsuranceCalculator: React.FC = () => {
      setReport(null);
   }
 
+  const renderForm = () => {
+    switch(calculationType) {
+        case 'pension':
+        case 'lumpSum':
+            const params = calculationType === 'pension' ? pensionParams : lumpSumParams;
+            const setParams = calculationType === 'pension' ? setPensionParams : setLumpSumParams;
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+                    <InputField
+                        id="averageWage"
+                        label={t('socialInsurance.form.avgWage.label')}
+                        type="number"
+                        value={params.averageWage || ''}
+                        onChange={(e) => setParams(p => ({ ...p, averageWage: parseFloat(e.target.value) || 0 }))}
+                        placeholder={t('socialInsurance.form.avgWage.placeholder')}
+                        required
+                    />
+                    <InputField
+                        id="contributionYears"
+                        label={t('socialInsurance.form.contributionYears.label')}
+                        type="number"
+                        value={params.contributionYears || ''}
+                        onChange={(e) => setParams(p => ({ ...p, contributionYears: parseFloat(e.target.value) || 0 }))}
+                        placeholder={t('socialInsurance.form.contributionYears.placeholder')}
+                        required
+                    />
+                </div>
+            );
+        case 'contribution':
+        default:
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+                    <InputField
+                        id="basicWage"
+                        label={t('socialInsurance.form.basicWage.label')}
+                        type="number"
+                        value={contributionParams.basicWage || ''}
+                        onChange={(e) => setContributionParams(p => ({ ...p, basicWage: parseFloat(e.target.value) || 0 }))}
+                        placeholder={t('socialInsurance.form.basicWage.placeholder')}
+                    />
+                    <InputField
+                        id="variableWage"
+                        label={t('socialInsurance.form.variableWage.label')}
+                        type="number"
+                        value={contributionParams.variableWage || ''}
+                        onChange={(e) => setContributionParams(p => ({ ...p, variableWage: parseFloat(e.target.value) || 0 }))}
+                        placeholder={t('socialInsurance.form.variableWage.placeholder')}
+                    />
+                    <div className="md:col-span-2">
+                        <SelectField
+                            id="year"
+                            label={t('salary.form.year.label')}
+                            value={contributionParams.year}
+                            onChange={(e) => setContributionParams(p => ({...p, year: parseInt(e.target.value)}))}
+                            options={TAX_YEARS.map(y => ({ value: y, label: y.toString() }))}
+                        />
+                    </div>
+                </div>
+            );
+    }
+  }
+
   if (viewState === 'report' && report) {
     return <ReportDisplay data={report} onBack={handleBackToForm} />;
   }
   
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
-      <div className="bg-white dark:bg-gray-800/50 p-6 md:p-8 rounded-lg border border-gray-200 dark:border-cyan-500/30 shadow-xl shadow-gray-400/20 dark:shadow-2xl dark:shadow-cyan-500/10 dark:backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800/50 p-6 md:p-8 rounded-lg border border-gray-200 dark:border-cyan-500/30 shadow-xl dark:shadow-cyan-500/10 dark:backdrop-blur-sm">
         <form onSubmit={handleCalculate}>
           <h2 className="text-2xl font-bold text-cyan-700 dark:text-cyan-400 mb-6 text-center">{t('socialInsurance.title')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField
-              id="basicWage"
-              label={t('socialInsurance.form.basicWage.label')}
-              type="number"
-              value={basicWage}
-              onChange={(e) => setBasicWage(e.target.value)}
-              placeholder={t('socialInsurance.form.basicWage.placeholder')}
+          
+          <div className="mb-6">
+             <SelectField
+                id="calculationType"
+                label={t('socialInsurance.form.type.label')}
+                value={calculationType}
+                onChange={(e) => setCalculationType(e.target.value as CalculationType)}
+                options={calculationTypeOptions}
             />
-             <InputField
-              id="variableWage"
-              label={t('socialInsurance.form.variableWage.label')}
-              type="number"
-              value={variableWage}
-              onChange={(e) => setVariableWage(e.target.value)}
-              placeholder={t('socialInsurance.form.variableWage.placeholder')}
-            />
-            <div className="md:col-span-2">
-                <SelectField
-                id="year"
-                label={t('salary.form.year.label')}
-                value={year}
-                onChange={(e) => setYear(parseInt(e.target.value))}
-                options={TAX_YEARS.map(y => ({ value: y, label: y.toString() }))}
-                />
-            </div>
           </div>
+          
+          {renderForm()}
+
            <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center md:col-span-2">
             {t('socialInsurance.form.note')}
           </div>
