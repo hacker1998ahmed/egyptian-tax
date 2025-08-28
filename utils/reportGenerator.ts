@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
-import type { CalculationRecord, ReportData } from '../types';
+import type { CalculationRecord, ReportData, PayrollRun, FixedAsset, DepreciationEntry } from '../types';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 
 // Add Capacitor to the window object for TypeScript
@@ -14,19 +14,57 @@ declare global {
 }
 
 export const generatePdfDataUri = async (reportElement: HTMLElement | null): Promise<string | null> => {
-  if (!reportElement) return null;
+  if (!reportElement) {
+    alert("Error: Report element not found for PDF generation.");
+    return null;
+  }
   
   try {
+    // Add a small delay to allow for rendering and animations to complete, improving reliability.
+    await new Promise(resolve => setTimeout(resolve, 300));
+
     const canvas = await html2canvas(reportElement, {
       scale: 2, // Higher scale for better quality
-      backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#f9fafb',
+      backgroundColor: '#ffffff', // Force white background for consistency
       useCORS: true,
-      onclone: (document) => {
-        // Ensure the print header is not included in the PDF canvas
-        const printHeader = document.querySelector('.print-header');
-        if (printHeader) {
-          (printHeader as HTMLElement).style.display = 'none';
-        }
+      onclone: (clonedDoc) => {
+        // Inject styles to force a light-mode, print-friendly appearance with a white background and black text.
+        // This is more robust than removing the 'dark' class, as it specifically overrides styles.
+        const style = clonedDoc.createElement('style');
+        style.innerHTML = `
+          /* Universal overrides for PDF generation */
+          .dark body, .dark .printable-area {
+            background-color: #ffffff !important;
+            background-image: none !important;
+          }
+          .dark .printable-area *, .dark .printable-area {
+            color: #1f2937 !important;
+            border-color: #e5e7eb !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+          }
+          
+          /* Override specific known background classes to be sure */
+          .dark .bg-white, .dark .bg-gray-100, .dark .bg-gray-200, .dark .bg-gray-800, .dark .bg-gray-800\\/50, .dark .bg-gray-800\\/60, .dark .bg-gray-900, .dark .bg-gray-900\\/50, .dark .printable-card {
+            background-color: #ffffff !important;
+          }
+          .dark .bg-gray-100.dark\\:bg-gray-900\\/50 {
+             background-color: #f9fafb !important; /* Lighter gray for nested cards */
+          }
+          
+          /* Re-apply semantic text colors that were overridden by the wildcard */
+          .dark .text-red-400 { color: #dc2626 !important; }
+          .dark .text-yellow-400 { color: #d97706 !important; }
+          .dark .text-green-400 { color: #16a34a !important; }
+          .dark .text-fuchsia-400, .dark .text-fuchsia-700, .dark .text-fuchsia-600 { color: #a21caf !important; }
+          .dark .text-cyan-400, .dark .text-cyan-700, .dark .text-cyan-600 { color: #0891b2 !important; }
+          
+          /* Hide elements not meant for printing/PDF */
+          .no-print, .print-header { 
+            display: none !important; 
+          }
+        `;
+        clonedDoc.head.appendChild(style);
       }
     });
     
@@ -59,7 +97,8 @@ export const generatePdfDataUri = async (reportElement: HTMLElement | null): Pro
 
   } catch (error) {
     console.error("Error generating PDF data URI:", error);
-    alert("An error occurred while generating the PDF. Please try again.");
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    alert(`An error occurred while generating the PDF: ${errorMessage}. Please try again.`);
     return null;
   }
 };
@@ -109,71 +148,10 @@ export const generateExcelDataUri = (data: ReportData, headers: ExcelHeaders): s
 
   } catch (error) {
     console.error("Error generating Excel data URI:", error);
-    alert("An error occurred while generating the Excel file. Please try again.");
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    alert(`An error occurred while generating the Excel file: ${errorMessage}. Please try again.`);
     return null;
   }
-};
-
-
-export const printReport = (reportElement: HTMLElement | null) => {
-    if (!reportElement) return;
-
-    const printStyles = `
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            body * {
-                visibility: hidden;
-            }
-            .printable-area, .printable-area * {
-                visibility: visible;
-            }
-            .printable-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 0;
-                border: none;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .print-header {
-                display: block !important;
-                text-align: center;
-                margin-bottom: 2rem;
-                padding: 1rem;
-                border-bottom: 2px solid #ccc;
-            }
-             .dark .printable-area {
-                 background-color: white !important;
-             }
-             .dark .printable-area, .dark .printable-area * {
-                color: black !important;
-             }
-             .dark .bg-gray-800\/60, .dark .bg-gray-900\/50, .dark .bg-gray-800\/50 {
-                background-color: #f3f4f6 !important;
-             }
-            @page {
-                size: auto;
-                margin: 0.75in;
-            }
-        }
-    `;
-
-    const styleSheet = document.createElement('style');
-    styleSheet.type = 'text/css';
-    styleSheet.innerText = printStyles;
-    document.head.appendChild(styleSheet);
-
-    window.print();
-    
-    // Clean up after print
-    document.head.removeChild(styleSheet);
 };
 
 export const generateHistoryExcelDataUri = (history: CalculationRecord[], t: (key: any, ...args: any[]) => string): string | null => {
@@ -209,10 +187,63 @@ export const generateHistoryExcelDataUri = (history: CalculationRecord[], t: (ke
     return `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
   } catch (error) {
     console.error("Error generating history Excel data URI:", error);
-    alert("An error occurred while generating the Excel file. Please try again.");
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    alert(`${t('error.unexpected')} ${errorMessage}`);
     return null;
   }
 };
+
+export const generatePayrollExcelDataUri = (payrollRun: PayrollRun, t: (key: any, ...args: any[]) => string): string | null => {
+  try {
+    const mainData = payrollRun.records.map(r => ({
+      [t('payrollManager.table.name')]: r.name,
+      [t('payrollManager.table.department')]: r.department,
+      [t('payrollManager.form.gross')]: r.grossMonthlySalary,
+      [t('payrollManager.form.allowances')]: r.allowances,
+      [t('payrollManager.form.deductions')]: r.deductions,
+      [t('report.totalInsurance')]: r.totalInsurance,
+      [t('report.totalTax')]: r.totalTax,
+      [t('report.netIncome')]: r.netSalary,
+    }));
+    
+    const summaryData = [
+        {}, // Spacer
+        { A: t('payrollManager.report.summaryTitle') },
+        { A: t('payrollManager.report.employeeCount'), B: payrollRun.summary.employeeCount },
+        { A: t('payrollManager.report.totalGross'), B: payrollRun.summary.totalGross },
+        { A: t('payrollManager.report.totalInsurance'), B: payrollRun.summary.totalInsurance },
+        { A: t('payrollManager.report.totalTax'), B: payrollRun.summary.totalTax },
+        { A: t('payrollManager.report.totalNet'), B: payrollRun.summary.totalNet },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(mainData);
+    XLSX.utils.sheet_add_json(ws, summaryData, { skipHeader: true, origin: -1 });
+
+    ws['!cols'] = [
+      { wch: 25 }, // Name
+      { wch: 20 }, // Department
+      { wch: 15 }, // Gross
+      { wch: 15 }, // Allowances
+      { wch: 15 }, // Deductions
+      { wch: 15 }, // Insurance
+      { wch: 15 }, // Tax
+      { wch: 15 }, // Net
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const sheetName = `${t('payrollManager.report.title', t(`month.${payrollRun.month}` as any), payrollRun.year)}`.substring(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+    const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+    return `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
+  } catch (error) {
+    console.error("Error generating payroll Excel data URI:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    alert(`${t('error.unexpected')} ${errorMessage}`);
+    return null;
+  }
+};
+
 
 export const generateAgeReportExcelDataUri = (ageData: any, t: (key: any, ...args: any[]) => string): string | null => {
   try {
@@ -261,10 +292,111 @@ export const generateAgeReportExcelDataUri = (ageData: any, t: (key: any, ...arg
 
   } catch (error) {
     console.error("Error generating Age Report Excel data URI:", error);
-    alert("An error occurred while generating the Excel file. Please try again.");
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    alert(`${t('error.unexpected')} ${errorMessage}`);
     return null;
   }
 };
+
+export const generateAssetScheduleExcelDataUri = (asset: FixedAsset, schedule: DepreciationEntry[], t: (key: any, ...args: any[]) => string): string | null => {
+  try {
+    const data = schedule.map(entry => ({
+      [t('fixedAssets.schedule.year')]: entry.year,
+      [t('fixedAssets.schedule.depreciation')]: entry.depreciation,
+      [t('fixedAssets.schedule.accumulated')]: entry.accumulatedDepreciation,
+      [t('fixedAssets.schedule.bookValue')]: entry.bookValue,
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [{ wch: 10 }, { wch: 20 }, { wch: 25 }, { wch: 20 }];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `Depreciation for ${asset.name}`);
+    
+    const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+    return `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
+  } catch (error) {
+    console.error("Error generating Asset Schedule Excel:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    alert(`${t('error.unexpected')} ${errorMessage}`);
+    return null;
+  }
+};
+
+export const generateAnnualDepreciationExcelDataUri = (year: number, reportData: any[], t: (key: any, ...args: any[]) => string): string | null => {
+  try {
+    const data = reportData.map(item => ({
+      [t('fixedAssets.table.name')]: item.name,
+      [t('fixedAssets.annualReport.depreciationForYear')]: item.depreciation,
+      [t('fixedAssets.annualReport.bookValue')]: item.bookValue,
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 20 }];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `Depreciation Report ${year}`);
+    
+    const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+    return `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
+  } catch (error) {
+    console.error("Error generating Annual Depreciation Excel:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    alert(`${t('error.unexpected')} ${errorMessage}`);
+    return null;
+  }
+};
+
+
+/**
+ * Shares a file using the Web Share API if available.
+ * @param title The title of the share.
+ * @param text The text to share.
+ * @param filename The name of the file to share.
+ * @param dataUri The data URI of the file content.
+ * @param mimeType The MIME type of the file.
+ * @param t Translation function for alerts.
+ */
+export const shareFile = async (title: string, text: string, filename: string, dataUri: string, mimeType: string, t: (key: any) => string): Promise<void> => {
+    if (!navigator.share) {
+        alert(t('common.shareNotSupported'));
+        return;
+    }
+
+    try {
+        const response = await fetch(dataUri);
+        if (!response.ok) {
+            throw new Error('Failed to fetch data URI for sharing');
+        }
+        const blob = await response.blob();
+        const file = new File([blob], filename, { type: mimeType });
+
+        // Check if file sharing is supported
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                title: title,
+                text: text,
+                files: [file],
+            });
+        } else {
+            // Fallback to sharing text if files are not supported by the share target
+            await navigator.share({
+                title: title,
+                text: text,
+            });
+        }
+    } catch (error) {
+        // User cancellation of the share dialog is not an error.
+        if (error instanceof DOMException && error.name === 'AbortError') {
+            console.log('Share was cancelled by the user.');
+        } else {
+            console.error("Sharing failed:", error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            alert(`${t('error.unexpectedShare')} ${errorMessage}`);
+        }
+    }
+};
+
 
 /**
  * Handles downloading a file for web browsers as a fallback.
@@ -321,7 +453,7 @@ export const downloadFile = async (filename: string, dataUri: string | null, t: 
         } catch (error) {
             console.error("Capacitor Filesystem writeFile error:", error);
             const errorMessage = error instanceof Error ? error.message : String(error);
-            alert(`${t('error.unexpected')} ${errorMessage}`);
+            alert(`${t('error.unexpected')} ${errorMessage}. Attempting web download as a fallback.`);
             // If native saving fails, attempt a web download as a last resort
             console.log("Falling back to web download method due to native error.");
             downloadFileWeb(filename, dataUri, t);

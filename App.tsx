@@ -30,9 +30,39 @@ import BMICalculator from './pages/BMICalculator';
 import InheritanceCalculator from './pages/InheritanceCalculator';
 import CustomsCalculator from './pages/CustomsCalculator';
 import PayrollCalculator from './pages/PayrollCalculator';
+import FixedAssetsCalculator from './pages/FixedAssetsCalculator';
+import Invoicing from './pages/Invoicing';
+import Inventory from './pages/Inventory';
 import CurrencyConverter from './pages/CurrencyConverter';
 import SavingsGoalCalculator from './pages/SavingsGoalCalculator';
 import ProfitMarginCalculator from './pages/ProfitMarginCalculator';
+import FinancialDashboard from './pages/FinancialDashboard';
+import TaxPlanner from './pages/TaxPlanner';
+import PerformanceAnalysis from './pages/PerformanceAnalysis';
+import TaxForecast from './pages/TaxForecast';
+import ShareCapitalCalculator from './pages/ShareCapitalCalculator';
+import TipCalculator from './pages/TipCalculator';
+import FuelCostCalculator from './pages/FuelCostCalculator';
+import DateDifferenceCalculator from './pages/DateDifferenceCalculator';
+import TimeCalculator from './pages/TimeCalculator';
+import PercentageCalculator from './pages/PercentageCalculator';
+import UnitConverter from './pages/UnitConverter';
+import GpaCalculator from './pages/GpaCalculator';
+import DueDateCalculator from './pages/DueDateCalculator';
+import CalorieCalculator from './pages/CalorieCalculator';
+import DiscountCalculator from './pages/DiscountCalculator';
+import PaceCalculator from './pages/PaceCalculator';
+import TransportationFareCalculator from './pages/TransportationFareCalculator';
+import PasswordGenerator from './pages/PasswordGenerator';
+import QrCodeGenerator from './pages/QrCodeGenerator';
+import RoiCalculator from './pages/RoiCalculator';
+import InflationCalculator from './pages/InflationCalculator';
+import RetirementCalculator from './pages/RetirementCalculator';
+import CookingConverter from './pages/CookingConverter';
+import OvulationCalculator from './pages/OvulationCalculator';
+import FreelancerTaxCalculator from './pages/FreelancerTaxCalculator';
+import CapitalGainsTaxCalculator from './pages/CapitalGainsTaxCalculator';
+import RealEstateTransactionTaxCalculator from './pages/RealEstateTransactionTaxCalculator';
 
 
 function AppContent(): React.ReactNode {
@@ -90,12 +120,72 @@ function AppContent(): React.ReactNode {
         return <CustomsCalculator />;
       case 'payrollCalculator':
         return <PayrollCalculator />;
+      case 'fixedAssetsCalculator':
+        return <FixedAssetsCalculator />;
+      case 'invoicing':
+        return <Invoicing />;
+      case 'inventory':
+        return <Inventory />;
+      case 'financialDashboard':
+        return <FinancialDashboard />;
+      case 'taxPlanner':
+        return <TaxPlanner />;
+      case 'performanceAnalysis':
+        return <PerformanceAnalysis />;
+      case 'taxForecast':
+        return <TaxForecast />;
       case 'currencyConverter':
         return <CurrencyConverter />;
       case 'savingsGoalCalculator':
         return <SavingsGoalCalculator />;
       case 'profitMarginCalculator':
         return <ProfitMarginCalculator />;
+      case 'shareCapitalCalculator':
+        return <ShareCapitalCalculator />;
+      case 'tipCalculator':
+        return <TipCalculator />;
+      case 'fuelCostCalculator':
+        return <FuelCostCalculator />;
+      case 'dateDifferenceCalculator':
+        return <DateDifferenceCalculator />;
+      case 'timeCalculator':
+        return <TimeCalculator />;
+      case 'percentageCalculator':
+        return <PercentageCalculator />;
+      case 'unitConverter':
+        return <UnitConverter />;
+      case 'gpaCalculator':
+        return <GpaCalculator />;
+      case 'dueDateCalculator':
+        return <DueDateCalculator />;
+      case 'ovulationCalculator':
+        return <OvulationCalculator />;
+      case 'calorieCalculator':
+        return <CalorieCalculator />;
+      case 'discountCalculator':
+        return <DiscountCalculator />;
+      case 'paceCalculator':
+        return <PaceCalculator />;
+      case 'transportationFareCalculator':
+        return <TransportationFareCalculator />;
+      case 'passwordGenerator':
+        return <PasswordGenerator />;
+      case 'qrCodeGenerator':
+        return <QrCodeGenerator />;
+      case 'roiCalculator':
+        return <RoiCalculator />;
+      case 'inflationCalculator':
+        return <InflationCalculator />;
+      case 'retirementCalculator':
+        return <RetirementCalculator />;
+      case 'cookingConverter':
+        return <CookingConverter />;
+      case 'freelancerTaxCalculator':
+        return <FreelancerTaxCalculator />;
+      case 'capitalGainsTaxCalculator':
+        return <CapitalGainsTaxCalculator />;
+      case 'realEstateTransactionTaxCalculator':
+        return <RealEstateTransactionTaxCalculator />;
       case 'history':
         return <History />;
       case 'askExpert':

@@ -45,17 +45,18 @@ const Roadmap: React.FC<RoadmapProps> = ({ setActivePage }) => {
         </PhaseCard>
 
         <PhaseCard phase={t('roadmap.phase.2')} title={t('roadmap.phase2.title')} icon={<span>🧩</span>}>
-          <li><strong>{t('roadmap.phase2.item1')}</strong></li>
-          <li><strong>{t('roadmap.phase2.item2')}</strong></li>
-          <li><strong>{t('roadmap.phase2.item3')}</strong></li>
-          <li><strong>{t('roadmap.phase2.item4')}</strong></li>
+          <li><strong>{t('roadmap.phase2.item1')} <span className="text-xs font-bold text-green-600 dark:text-green-400">({t('common.done')})</span></strong></li>
+          <li><strong>{t('roadmap.phase2.item2')} <span className="text-xs font-bold text-green-600 dark:text-green-400">({t('common.done')})</span></strong></li>
+          <li><strong>{t('roadmap.phase2.item3')} <span className="text-xs font-bold text-green-600 dark:text-green-400">({t('common.done')})</span></strong></li>
+          <li><strong>{t('roadmap.phase2.item4')} <span className="text-xs font-bold text-green-600 dark:text-green-400">({t('common.done')})</span></strong></li>
+          <li><strong>{t('roadmap.phase2.item5')}</strong></li>
         </PhaseCard>
 
         <PhaseCard phase={t('roadmap.phase.3')} title={t('roadmap.phase3.title')} icon={<span>💡</span>}>
-          <li><strong>{t('roadmap.phase3.item1')}</strong></li>
-          <li><strong>{t('roadmap.phase3.item2')}</strong></li>
-          <li><strong>{t('roadmap.phase3.item3')}</strong></li>
-          <li><strong>{t('roadmap.phase3.item4')}</strong></li>
+          <li><strong>{t('roadmap.phase3.item1')} <span className="text-xs font-bold text-green-600 dark:text-green-400">({t('common.done')})</span></strong></li>
+          <li><strong>{t('roadmap.phase3.item2')} <span className="text-xs font-bold text-green-600 dark:text-green-400">({t('common.done')})</span></strong></li>
+          <li><strong>{t('roadmap.phase3.item3')} <span className="text-xs font-bold text-green-600 dark:text-green-400">({t('common.done')})</span></strong></li>
+          <li><strong>{t('roadmap.phase3.item4')} <span className="text-xs font-bold text-green-600 dark:text-green-400">({t('common.done')})</span></strong></li>
         </PhaseCard>
         
          <PhaseCard phase={t('roadmap.phase.4')} title={t('roadmap.phase4.title')} icon={<span>💬</span>}>

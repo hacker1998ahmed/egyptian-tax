@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import type { SavingsGoalParams } from '../types';
+import React, { useState } from 'react';
+import type { SavingsGoalParams, CalculationRecord, ReportData } from '../types';
 import InputField from '../components/InputField';
 import { useTranslation } from '../i18n/context';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 type Result = {
     years: number;
@@ -29,6 +30,7 @@ const SavingsGoalCalculator: React.FC = () => {
     });
     const [result, setResult] = useState<Result | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [, setHistory] = useLocalStorage<CalculationRecord[]>('taxHistory', []);
 
     const handleInputChange = (field: keyof SavingsGoalParams, value: string) => {
         if(field === 'goalName') {
@@ -79,13 +81,33 @@ const SavingsGoalCalculator: React.FC = () => {
         const months = totalMonths % 12;
         const totalContributions = params.initialDeposit + (params.monthlyContribution * totalMonths);
         const totalInterest = currentBalance - totalContributions;
+        
+        const newResult = { years, months, totalContributions, totalInterest };
+        setResult(newResult);
 
-        setResult({
-            years,
-            months,
-            totalContributions,
-            totalInterest: totalInterest
-        });
+        // Save to history
+        const timeframe = `${newResult.years} ${t('savingsGoal.results.years')} ${t('savingsGoal.results.and')} ${newResult.months} ${t('savingsGoal.results.months')}`;
+        const report: ReportData = {
+            summary: `To achieve the goal of '${params.goalName}' (${formatCurrency(params.targetAmount)}), it will take approximately ${timeframe}.`,
+            calculations: [
+                { description: t('savingsGoal.results.timeframe'), amount: timeframe },
+                { description: t('savingsGoal.results.totalContributions'), amount: formatCurrency(newResult.totalContributions) },
+                { description: t('savingsGoal.results.totalInterest'), amount: formatCurrency(newResult.totalInterest) },
+            ],
+            grossIncome: params.targetAmount,
+            netIncome: newResult.totalContributions,
+            totalTax: newResult.totalInterest,
+            totalInsurance: 0,
+            applicableLaws: ["Compound interest formulas."]
+        };
+        const newRecord: CalculationRecord = {
+            id: new Date().toISOString(),
+            timestamp: new Date().toISOString(),
+            type: 'savingsGoal',
+            params,
+            report,
+        };
+        setHistory(prev => [newRecord, ...prev]);
     };
     
     const resetForm = () => {
@@ -135,7 +157,7 @@ const SavingsGoalCalculator: React.FC = () => {
                            {result.years > 0 && `${result.years} ${t('savingsGoal.results.years')}`}
                            {result.years > 0 && result.months > 0 && ` ${t('savingsGoal.results.and')} `}
                            {result.months > 0 && `${result.months} ${t('savingsGoal.results.months')}`}
-                           {result.years === 0 && result.months === 0 && `🎉 ${t('common.comingSoon')}`}
+                           {result.years === 0 && result.months === 0 && `🎉 ${t('common.done')}`}
                         </p>
                     </div>
                     <div className="mt-6">

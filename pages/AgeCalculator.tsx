@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import InputField from '../components/InputField';
 import { useTranslation } from '../i18n/context';
-import { generatePdfDataUri, generateAgeReportExcelDataUri, downloadFile } from '../utils/reportGenerator';
+import { generatePdfDataUri, generateAgeReportExcelDataUri, downloadFile, shareFile } from '../utils/reportGenerator';
 
 const StatCard: React.FC<{ label: string, value: string | number, unit?: string, className?: string, valueClassName?: string }> = ({ label, value, unit, className = '', valueClassName = '' }) => (
     <div className={`bg-gray-200 dark:bg-gray-900/50 p-4 rounded-lg text-center ${className}`}>
@@ -47,7 +47,7 @@ const AgeCalculator: React.FC = () => {
     const [birthDate, setBirthDate] = useState('');
     const [ageData, setAgeData] = useState<any>(null);
     const reportContentRef = useRef<HTMLDivElement>(null);
-    const [isExporting, setIsExporting] = useState<null | 'pdf' | 'excel'>(null);
+    const [isExporting, setIsExporting] = useState<null | 'pdf' | 'excel' | 'share'>(null);
 
     useEffect(() => {
         if (!birthDate) {
@@ -142,6 +142,24 @@ const AgeCalculator: React.FC = () => {
         }
     }
 
+    const handleShare = async () => {
+        if (!reportContentRef.current || isExporting) return;
+        setIsExporting('share');
+        try {
+            const uri = await generatePdfDataUri(reportContentRef.current);
+            if (uri) {
+                const filename = `Age-Report-${new Date().toISOString().split('T')[0]}.pdf`;
+                const summaryText = `${t('age.results.exactAge')}: ${ageData.years} ${t('age.results.years')}, ${ageData.months} ${t('age.results.months')}, ${ageData.days} ${t('age.results.days')}`;
+                await shareFile(t('age.title'), summaryText, filename, uri, 'application/pdf', (key) => t(key as any));
+            }
+        } catch (error) {
+            console.error("Error preparing share:", error);
+            alert(t('error.unexpected'));
+        } finally {
+            setIsExporting(null);
+        }
+    }
+
     const resetForm = () => setBirthDate('');
 
     return (
@@ -217,12 +235,15 @@ const AgeCalculator: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 justify-center gap-4 no-print">
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 justify-center gap-4 no-print">
                     <button onClick={handleDownloadPdf} disabled={!!isExporting} className="bg-teal-600 dark:bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 dark:hover:bg-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-300/50 transition-all duration-300 shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
                         {isExporting === 'pdf' ? t('report.downloadingPdf') : t('age.export.pdf')}
                     </button>
                     <button onClick={handleDownloadExcel} disabled={!!isExporting} className="bg-green-700 dark:bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-800 dark:hover:bg-green-500 focus:outline-none focus:ring-4 focus:ring-green-400/50 transition-all duration-300 shadow-lg shadow-green-600/30 disabled:opacity-50 disabled:cursor-not-allowed">
                         {isExporting === 'excel' ? t('report.downloadingExcel') : t('age.export.excel')}
+                    </button>
+                    <button onClick={handleShare} disabled={!!isExporting} className="bg-purple-600 dark:bg-purple-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 dark:hover:bg-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-300/50 transition-all duration-300 shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {isExporting === 'share' ? t('common.sharing') : t('common.share')}
                     </button>
                 </div>
                 </>

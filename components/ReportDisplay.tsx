@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import type { ReportData } from '../types';
 import IncomeChart from './IncomeChart';
-import { generatePdfDataUri, generateExcelDataUri, printReport, downloadFile } from '../utils/reportGenerator';
+import { generatePdfDataUri, generateExcelDataUri, downloadFile, shareFile } from '../utils/reportGenerator';
 import { useTranslation } from '../i18n/context';
 
 interface ReportDisplayProps {
@@ -25,11 +25,11 @@ const NeonCard: React.FC<{ title: string, children: React.ReactNode, className?:
 const ReportDisplay: React.FC<ReportDisplayProps> = ({ data, onBack }) => {
   const { t, language } = useTranslation();
   const reportContentRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState<null | 'pdf' | 'excel'>(null);
+  const [isProcessing, setIsProcessing] = useState<null | 'pdf' | 'excel' | 'share'>(null);
   
   const handleDownloadPDF = async () => {
-    if (!reportContentRef.current || isDownloading) return;
-    setIsDownloading('pdf');
+    if (!reportContentRef.current || isProcessing) return;
+    setIsProcessing('pdf');
     try {
       const uri = await generatePdfDataUri(reportContentRef.current);
       const filename = `Tax-Report-${new Date().toISOString().split('T')[0]}.pdf`;
@@ -38,13 +38,13 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ data, onBack }) => {
         console.error("Error during PDF download:", error);
         alert(t('error.unexpected'));
     } finally {
-        setIsDownloading(null);
+        setIsProcessing(null);
     }
   }
   
   const handleDownloadExcel = async () => {
-    if (isDownloading) return;
-    setIsDownloading('excel');
+    if (isProcessing) return;
+    setIsProcessing('excel');
     try {
         const translatedData = {
           ...data,
@@ -69,14 +69,32 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ data, onBack }) => {
         console.error("Error during Excel download:", error);
         alert(t('error.unexpected'));
     } finally {
-        setIsDownloading(null);
+        setIsProcessing(null);
     }
   }
 
-  const handlePrint = () => {
-      if (reportContentRef.current) {
-          printReport(reportContentRef.current);
+  const handleShare = async () => {
+    if (!reportContentRef.current || isProcessing) return;
+    setIsProcessing('share');
+    try {
+      const uri = await generatePdfDataUri(reportContentRef.current);
+      if (uri) {
+          const filename = `Tax-Report-${new Date().toISOString().split('T')[0]}.pdf`;
+          await shareFile(
+              t('header.title'), 
+              data.summary, 
+              filename,
+              uri,
+              'application/pdf',
+              (key) => t(key as any)
+          );
       }
+    } catch (error) {
+        console.error("Error during share preparation:", error);
+        alert(t('error.unexpected'));
+    } finally {
+        setIsProcessing(null);
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -160,17 +178,17 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ data, onBack }) => {
       </div>
       
       <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 justify-center gap-4 no-print">
-        <button onClick={onBack} className="sm:col-span-1 bg-gray-500 dark:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 focus:outline-none focus:ring-4 focus:ring-gray-400/50 transition-all duration-300 shadow-lg">
+        <button onClick={onBack} className="bg-gray-500 dark:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 focus:outline-none focus:ring-4 focus:ring-gray-400/50 transition-all duration-300 shadow-lg">
           {t('calculator.back')}
         </button>
-        <button onClick={handlePrint} className="sm:col-span-1 bg-blue-600 dark:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-300/50 transition-all duration-300 shadow-lg shadow-blue-500/30">
-          {t('report.printReport')}
+        <button onClick={handleDownloadPDF} disabled={!!isProcessing} className="bg-teal-600 dark:bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 dark:hover:bg-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-300/50 transition-all duration-300 shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+          {isProcessing === 'pdf' ? t('report.downloadingPdf') : t('report.downloadPdf')}
         </button>
-        <button onClick={handleDownloadPDF} disabled={!!isDownloading} className="sm:col-span-1 bg-teal-600 dark:bg-teal-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 dark:hover:bg-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-300/50 transition-all duration-300 shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-          {isDownloading === 'pdf' ? t('report.downloadingPdf') : t('report.downloadPdf')}
+        <button onClick={handleDownloadExcel} disabled={!!isProcessing} className="bg-green-700 dark:bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-800 dark:hover:bg-green-500 focus:outline-none focus:ring-4 focus:ring-green-400/50 transition-all duration-300 shadow-lg shadow-green-600/30 disabled:opacity-50 disabled:cursor-not-allowed">
+          {isProcessing === 'excel' ? t('report.downloadingExcel') : t('report.downloadExcel')}
         </button>
-        <button onClick={handleDownloadExcel} disabled={!!isDownloading} className="sm:col-span-1 bg-green-700 dark:bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-800 dark:hover:bg-green-500 focus:outline-none focus:ring-4 focus:ring-green-400/50 transition-all duration-300 shadow-lg shadow-green-600/30 disabled:opacity-50 disabled:cursor-not-allowed">
-          {isDownloading === 'excel' ? t('report.downloadingExcel') : t('report.downloadExcel')}
+        <button onClick={handleShare} disabled={!!isProcessing} className="bg-purple-600 dark:bg-purple-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 dark:hover:bg-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-300/50 transition-all duration-300 shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+          {isProcessing === 'share' ? t('common.sharing') : t('common.share')}
         </button>
       </div>
     </div>

@@ -183,6 +183,183 @@ export interface ProfitMarginParams {
     operatingExpenses: number;
 }
 
+export interface Employee {
+  id: string;
+  name: string;
+  department: string;
+  grossMonthlySalary: number;
+  allowances: number;
+  deductions: number;
+}
+
+export interface PayrollEmployeeRecord extends Employee {
+    totalInsurance: number;
+    totalTax: number;
+    netSalary: number;
+}
+
+export interface PayrollRun {
+  id: string; // e.g., "2024-05"
+  timestamp: string;
+  month: number;
+  year: number;
+  records: PayrollEmployeeRecord[];
+  summary: {
+      totalGross: number;
+      totalInsurance: number;
+      totalTax: number;
+      totalNet: number;
+      employeeCount: number;
+  }
+}
+
+export interface DepreciationEntry {
+    year: number;
+    depreciation: number;
+    accumulatedDepreciation: number;
+    bookValue: number;
+}
+
+export interface FixedAsset {
+    id: string;
+    name: string;
+    purchaseDate: string;
+    cost: number;
+    salvageValue: number;
+    usefulLife: number; // in years
+    depreciationMethod: 'straight-line' | 'double-declining';
+}
+
+export interface Customer {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+}
+
+export interface InvoiceItem {
+    id: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+}
+
+export type InvoiceStatus = 'draft' | 'paid' | 'overdue';
+
+export interface Invoice {
+    id: string; // e.g., "INV-2024-001"
+    customerId: string;
+    issueDate: string;
+    dueDate: string;
+    items: InvoiceItem[];
+    notes?: string;
+    status: InvoiceStatus;
+    taxRate: number; // e.g., 0.14 for 14% VAT
+}
+
+export interface Product {
+    id: string;
+    name: string;
+    sku: string; // Stock Keeping Unit
+    costPrice: number;
+    sellingPrice: number;
+    quantity: number;
+    lowStockThreshold: number;
+}
+
+export interface ShareCapitalParams {
+    authorizedCapital: number;
+    issuedCapital: number;
+    paidInCapital: number;
+    numberOfShares: number;
+}
+
+export interface TipParams {
+    billAmount: number;
+    tipPercentage: number;
+    numberOfPeople: number;
+}
+
+export interface FuelCostParams {
+    distance: number;
+    efficiency: number;
+    pricePerLiter: number;
+}
+
+export interface RoiParams {
+    initialInvestment: number;
+    finalValue: number;
+}
+
+export interface RetirementParams {
+    currentAge: number;
+    retirementAge: number;
+    currentSavings: number;
+    monthlyContribution: number;
+    annualReturn: number;
+    desiredMonthlyIncome: number;
+}
+
+export interface FreelancerTaxParams {
+    revenue: number;
+    expenseType: 'actual' | 'deemed';
+    actualExpenses?: number;
+    year: number;
+}
+
+export interface CapitalGainsTaxParams {
+    purchasePrice: number;
+    sellingPrice: number;
+    costs: number; // Brokerage fees, etc.
+    year: number;
+}
+
+export interface RealEstateTransactionTaxParams {
+    saleValue: number;
+    year: number;
+}
+
+export interface BmiParams {
+    height: number;
+    weight: number;
+}
+export interface GpaParams {
+    courses: { name: string; credits: number; grade: number }[];
+}
+export interface CalorieParams {
+    age: number;
+    gender: 'male' | 'female';
+    height: number;
+    weight: number;
+    activity: number;
+}
+export interface DiscountParams {
+    originalPrice: number;
+    discount: number;
+}
+export interface PaceParams {
+    distance: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+}
+export interface RiderType {
+    id: number;
+    count: number;
+    fare: number;
+}
+export interface TransportationParams {
+    mode: 'group' | 'personal';
+    groupParams?: RiderType[];
+    personalParams?: { farePerTrip: number; tripsPerDay: number; daysPerWeek: number };
+}
+export interface InflationParams {
+    amount: number;
+    rate: number;
+    years: number;
+}
+
 
 export type CalculationRecordType = 
   'salary' | 
@@ -201,13 +378,29 @@ export type CalculationRecordType =
   'customs' |
   'payroll' |
   'loan' |
-  'profitMargin';
+  'profitMargin' |
+  'shareCapital' |
+  'roi' |
+  'retirement' |
+  'freelancer' |
+  'capitalGains' |
+  'realEstateTransaction' |
+  'bmi' |
+  'savingsGoal' |
+  'tip' |
+  'fuelCost' |
+  'gpa' |
+  'calorie' |
+  'discount' |
+  'pace' |
+  'transportation' |
+  'inflation';
 
 export interface CalculationRecord {
   id: string;
   timestamp: string;
   type: CalculationRecordType;
-  params: TaxParams | CorporateTaxParams | VATTaxParams | RealEstateTaxParams | WithholdingTaxParams | SocialInsuranceParams | StampDutyParams | ZakatParams | InvestmentParams | EndOfServiceParams | FeasibilityStudyParams | ElectricityParams | InheritanceParams | CustomsParams | PayrollParams | LoanParams | SavingsGoalParams | ProfitMarginParams;
+  params: TaxParams | CorporateTaxParams | VATTaxParams | RealEstateTaxParams | WithholdingTaxParams | SocialInsuranceParams | StampDutyParams | ZakatParams | InvestmentParams | EndOfServiceParams | FeasibilityStudyParams | ElectricityParams | InheritanceParams | CustomsParams | PayrollParams | LoanParams | SavingsGoalParams | ProfitMarginParams | ShareCapitalParams | RoiParams | RetirementParams | FreelancerTaxParams | CapitalGainsTaxParams | RealEstateTransactionTaxParams | BmiParams | TipParams | FuelCostParams | GpaParams | CalorieParams | DiscountParams | PaceParams | TransportationParams | InflationParams;
   report: ReportData;
 }
 
@@ -232,9 +425,39 @@ export type Page =
   'inheritanceCalculator' |
   'customsCalculator' |
   'payrollCalculator' |
+  'fixedAssetsCalculator' |
+  'invoicing' |
+  'inventory' |
+  'financialDashboard' |
+  'taxPlanner' |
+  'performanceAnalysis' |
+  'taxForecast' |
   'currencyConverter' |
   'savingsGoalCalculator' |
   'profitMarginCalculator' |
+  'shareCapitalCalculator' |
+  'tipCalculator' |
+  'fuelCostCalculator' |
+  'dateDifferenceCalculator' |
+  'timeCalculator' |
+  'percentageCalculator' |
+  'unitConverter' |
+  'gpaCalculator' |
+  'dueDateCalculator' |
+  'ovulationCalculator' |
+  'calorieCalculator' |
+  'discountCalculator' |
+  'paceCalculator' |
+  'transportationFareCalculator' |
+  'passwordGenerator' |
+  'qrCodeGenerator' |
+  'roiCalculator' |
+  'inflationCalculator' |
+  'retirementCalculator' |
+  'cookingConverter' |
+  'freelancerTaxCalculator' |
+  'capitalGainsTaxCalculator' |
+  'realEstateTransactionTaxCalculator' |
   'history' | 
   'settings' | 
   'askExpert' | 

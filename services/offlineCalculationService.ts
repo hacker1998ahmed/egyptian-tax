@@ -1,4 +1,4 @@
-import type { ReportData, CalculationStep, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams, PayrollParams } from '../types';
+import type { ReportData, CalculationStep, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams, PayrollParams, ShareCapitalParams, RoiParams, RetirementParams, FreelancerTaxParams, CapitalGainsTaxParams, RealEstateTransactionTaxParams } from '../types';
 import { SALARY_TAX_BRACKETS, SOCIAL_INSURANCE_PARAMS, ELECTRICITY_BRACKETS } from './taxBrackets';
 
 const formatCurrency = (amount: number, locale = 'ar-EG') => {
@@ -234,308 +234,490 @@ export const getWithholdingTaxReport = async (params: WithholdingTaxParams): Pro
 };
 
 export const getSocialInsuranceReport = async (params: SocialInsuranceParams): Promise<ReportData> => {
+    const calculations: CalculationStep[] = [];
+    let summary = '';
+    let grossIncome = 0;
+    let totalTax = 0;
+    let totalInsurance = 0;
+    let netIncome = 0;
+
     switch (params.calculationType) {
         case 'contribution': {
-            const calculations: CalculationStep[] = [];
-            const insuranceRules = SOCIAL_INSURANCE_PARAMS[params.year] || SOCIAL_INSURANCE_PARAMS[2024];
-            const totalMonthlyWage = params.basicWage + params.variableWage;
-            const contributionWage = Math.max(insuranceRules.min, Math.min(totalMonthlyWage, insuranceRules.max));
+            const { basicWage, variableWage, year } = params;
+            const insuranceRules = SOCIAL_INSURANCE_PARAMS[year] || SOCIAL_INSURANCE_PARAMS[2024];
+            const totalWage = basicWage + variableWage;
+            const contributionWage = Math.max(insuranceRules.min, Math.min(totalWage, insuranceRules.max));
             
-            calculations.push({ description: "الأجر الشامل الشهري", amount: formatCurrency(totalMonthlyWage) });
-            calculations.push({ description: "أجر الاشتراك التأميني المعتمد", amount: formatCurrency(contributionWage) });
+            const employeeContribution = contributionWage * insuranceRules.employeeRate;
+            const employerContribution = contributionWage * insuranceRules.employerRate;
+            totalInsurance = employeeContribution + employerContribution;
 
-            const employeeShare = contributionWage * insuranceRules.employeeRate;
-            const employerShare = contributionWage * insuranceRules.employerRate;
-            const totalInsurance = employeeShare + employerShare;
+            calculations.push({ description: "الأجر الشامل الشهري", amount: formatCurrency(totalWage) });
+            calculations.push({ description: `الأجر الخاضع للتأمين (بحد أقصى ${formatCurrency(insuranceRules.max)})`, amount: formatCurrency(contributionWage) });
+            calculations.push({ description: `حصة العامل (${(insuranceRules.employeeRate * 100).toFixed(2)}%)`, amount: formatCurrency(employeeContribution) });
+            calculations.push({ description: `حصة صاحب العمل (${(insuranceRules.employerRate * 100).toFixed(2)}%)`, amount: formatCurrency(employerContribution) });
             
-            calculations.push({ description: `حصة العامل (${insuranceRules.employeeRate * 100}%)`, amount: formatCurrency(employeeShare) });
-            calculations.push({ description: `حصة صاحب العمل (${insuranceRules.employerRate * 100}%)`, amount: formatCurrency(employerShare) });
-
-            return {
-                summary: `إجمالي اشتراك التأمينات الشهري هو ${formatCurrency(totalInsurance)}، مقسمة إلى ${formatCurrency(employeeShare)} حصة العامل و ${formatCurrency(employerShare)} حصة صاحب العمل.`,
-                calculations,
-                grossIncome: totalMonthlyWage,
-                totalTax: 0,
-                totalInsurance: totalInsurance,
-                netIncome: employeeShare, // Representing employee's monthly deduction
-                applicableLaws: ["قانون التأمينات الاجتماعية الموحد رقم 148 لسنة 2019."]
-            };
+            grossIncome = totalWage;
+            netIncome = totalWage - employeeContribution; // Net from employee perspective
+            summary = `إجمالي الاشتراك الشهري للتأمينات الاجتماعية هو ${formatCurrency(totalInsurance)} (حصة العامل ${formatCurrency(employeeContribution)} وصاحب العمل ${formatCurrency(employerContribution)}).`;
+            break;
         }
         case 'pension': {
-            const calculations: CalculationStep[] = [];
-            const pensionCoefficient = 1 / 45; // As per Egyptian law
-            const estimatedPension = params.averageWage * params.contributionYears * pensionCoefficient;
-
-            calculations.push({ description: "متوسط أجر الاشتراك", amount: formatCurrency(params.averageWage) });
-            calculations.push({ description: "عدد سنوات الاشتراك", amount: `${params.contributionYears} سنة` });
-            calculations.push({ description: "معامل حساب المعاش (1/45)", amount: pensionCoefficient.toFixed(4) });
-            calculations.push({ description: "المعاش الشهري الأساسي المقدر", amount: formatCurrency(estimatedPension) });
-
-            // In reality, there are min/max limits and other adjustments, this is a simplified model.
-            return {
-                summary: `بناءً على متوسط أجر ${formatCurrency(params.averageWage)} و ${params.contributionYears} سنة اشتراك، يُقدر المعاش الشهري بحوالي ${formatCurrency(estimatedPension)}. هذا تقدير مبسط وقد تختلف القيمة الفعلية.`,
-                calculations,
-                grossIncome: params.averageWage,
-                totalTax: 0,
-                totalInsurance: 0,
-                netIncome: estimatedPension,
-                applicableLaws: ["قانون التأمينات الاجتماعية الموحد رقم 148 لسنة 2019 (نموذج تقديري)."]
-            };
+            const { averageWage, contributionYears } = params;
+            // Simplified pension formula: (Average Wage * Contribution Years) / 45
+            const pension = (averageWage * Math.min(contributionYears, 36)) / 45; // Max 36 years often used in calculations
+            netIncome = pension;
+            calculations.push({ description: "متوسط أجر الاشتراك", amount: formatCurrency(averageWage) });
+            calculations.push({ description: "عدد سنوات الاشتراك", amount: contributionYears });
+            calculations.push({ description: "معامل الحساب (1/45)", amount: "1/45" });
+            summary = `المعاش الشهري التقريبي المستحق هو ${formatCurrency(pension)}.`;
+            break;
         }
         case 'lumpSum': {
-            const calculations: CalculationStep[] = [];
-            const assumedAnnualReturn = 0.05; // 5% example return on investment
-
-            // Estimate total contributions
-            const totalContributions = params.averageWage * SOCIAL_INSURANCE_PARAMS[2024].employeeRate * 12 * params.contributionYears;
-            calculations.push({ description: "إجمالي الاشتراكات المقدرة", amount: formatCurrency(totalContributions) });
-
-            // Simplified return calculation using compound interest formula's spirit
-            const totalReturn = totalContributions * (Math.pow(1 + assumedAnnualReturn, params.contributionYears) - 1);
-            calculations.push({ description: `العائد الاستثماري المقدر (بمتوسط ${assumedAnnualReturn * 100}%)`, amount: formatCurrency(totalReturn) });
-
-            const lumpSumAmount = totalContributions + totalReturn;
-            
-            return {
-                summary: `للمؤمن عليه الذي لا يستحق معاشًا، يُقدر مبلغ الدفعة الواحدة المستحق بحوالي ${formatCurrency(lumpSumAmount)}، بناءً على الاشتراكات والعائد الاستثماري التقديري.`,
-                calculations,
-                grossIncome: totalContributions,
-                totalTax: 0,
-                totalInsurance: 0,
-                netIncome: lumpSumAmount,
-                applicableLaws: ["قانون التأمينات الاجتماعية الموحد رقم 148 لسنة 2019 (نموذج تقديري)."]
-            };
+            const { averageWage, contributionYears } = params;
+            // Simplified lump sum formula: Average Wage * 12 months * 15% * years
+            const lumpSum = averageWage * 12 * 0.15 * contributionYears;
+            netIncome = lumpSum;
+            calculations.push({ description: "متوسط أجر الاشتراك", amount: formatCurrency(averageWage) });
+            calculations.push({ description: "عدد سنوات الاشتراك", amount: contributionYears });
+            calculations.push({ description: "معامل الحساب (15%)", amount: "15%" });
+            summary = `مبلغ الدفعة الواحدة المستحق هو ${formatCurrency(lumpSum)}.`;
+            break;
         }
     }
+
+    return {
+        summary,
+        calculations,
+        grossIncome,
+        totalTax,
+        totalInsurance,
+        netIncome,
+        applicableLaws: ["قانون التأمينات الاجتماعية الموحد رقم 148 لسنة 2019."]
+    };
 };
 
 export const getStampDutyReport = async (params: StampDutyParams): Promise<ReportData> => {
     const calculations: CalculationStep[] = [];
-    let rate = 0.004; // Default proportional rate
-    if(params.transactionType === 'commercial_ads') rate = 0.20;
-    const totalTax = params.amount * rate;
-    
-    calculations.push({ description: `قيمة التعامل`, amount: formatCurrency(params.amount) });
-    calculations.push({ description: `ضريبة الدمغة النسبية (${rate * 100}%)`, amount: formatCurrency(totalTax) });
+    let totalTax = 0;
+    let rateText = '';
+
+    // Simplified rates, not legally accurate but serve as a model
+    switch (params.transactionType) {
+        case 'supply_contracts':
+            totalTax = params.amount * 0.004 * 2; // 0.4% on each party
+            rateText = "0.4% على كل طرف";
+            break;
+        case 'commercial_ads':
+            totalTax = params.amount * 0.20;
+            rateText = "20% ضريبة نسبية";
+            break;
+        case 'insurance_premiums':
+            totalTax = params.amount * 0.03;
+            rateText = "3% على القسط";
+            break;
+        case 'bank_transactions':
+            totalTax = 1; // Example of a fixed fee
+            rateText = "ضريبة نوعية ثابتة";
+            break;
+        default:
+            totalTax = 5; // Generic fixed fee
+            rateText = "ضريبة نوعية ثابتة";
+            break;
+    }
+
+    calculations.push({ description: "قيمة التعامل", amount: formatCurrency(params.amount) });
+    calculations.push({ description: `الضريبة المطبقة (${rateText})`, amount: formatCurrency(totalTax) });
 
     return {
-        summary: `ضريبة الدمغة المستحقة على التعامل هي ${formatCurrency(totalTax)}.`,
+        summary: `ضريبة الدمغة المستحقة على هذا التعامل هي ${formatCurrency(totalTax)}.`,
         calculations,
         grossIncome: params.amount,
         totalTax,
         totalInsurance: 0,
-        netIncome: -totalTax,
-        applicableLaws: ["قانون ضريبة الدمغة رقم 111 لسنة 1980."]
+        netIncome: params.amount - totalTax,
+        applicableLaws: ["قانون ضريبة الدمغة رقم 111 لسنة 1980 وتعديلاته."]
     };
 };
-
 
 export const getZakatReport = async (params: ZakatParams): Promise<ReportData> => {
     const calculations: CalculationStep[] = [];
     const nisab = params.goldPrice * 85;
-    calculations.push({ description: "نصاب الزكاة (ما يعادل 85 جرام ذهب)", amount: formatCurrency(nisab) });
-
-    const zakatPool = params.cash + params.stocks + params.tradeGoods;
-    calculations.push({ description: "إجمالي الأموال الزكوية", amount: formatCurrency(zakatPool) });
+    calculations.push({ description: "النصاب (قيمة 85 جرام ذهب)", amount: formatCurrency(nisab) });
     
-    const netPool = zakatPool - params.debts;
-    calculations.push({ description: "خصم الديون", amount: formatCurrency(params.debts) });
-    calculations.push({ description: "صافي وعاء الزكاة", amount: formatCurrency(netPool) });
+    const zakatableAssets = params.cash + params.stocks + params.tradeGoods;
+    calculations.push({ description: "إجمالي الأصول الزكوية (نقد + أسهم + عروض تجارة)", amount: formatCurrency(zakatableAssets) });
 
-    let totalTax = 0;
-    if (netPool >= nisab) {
-        totalTax = netPool * 0.025;
-    }
+    const zakatPool = zakatableAssets - params.debts;
+    calculations.push({ description: "خصم الديون", amount: formatCurrency(params.debts) });
+    calculations.push({ description: "صافي وعاء الزكاة", amount: formatCurrency(zakatPool) });
+    
+    const zakatDue = zakatPool > nisab ? zakatPool * 0.025 : 0;
+    calculations.push({ description: "مقارنة الوعاء بالنصاب", amount: zakatPool > nisab ? "الوعاء أكبر من النصاب" : "الوعاء أقل من النصاب" });
     
     return {
-        summary: netPool >= nisab ? `صافي أموالك بلغ النصاب. الزكاة المستحقة هي ${formatCurrency(totalTax)}.` : `صافي أموالك لم يبلغ النصاب (${formatCurrency(nisab)}). لا تجب عليك الزكاة.`,
+        summary: zakatDue > 0 ? `الزكاة المستحقة للدفع هي ${formatCurrency(zakatDue)}.` : `لم يبلغ مالك النصاب، لا تجب عليك الزكاة هذا العام.`,
         calculations,
-        grossIncome: zakatPool,
-        totalTax,
+        grossIncome: zakatableAssets,
+        totalTax: zakatDue,
         totalInsurance: 0,
-        netIncome: netPool,
+        netIncome: zakatPool,
         applicableLaws: ["أحكام الزكاة في الشريعة الإسلامية."]
     };
 };
 
-
 export const getInvestmentReport = async (params: InvestmentParams): Promise<ReportData> => {
     const calculations: CalculationStep[] = [];
-    const monthlyRate = params.interestRate / 100 / 12;
-    const months = params.years * 12;
+    const { initialAmount, monthlyContribution, interestRate, years } = params;
+    const n = years * 12;
+    const r = interestRate / 100 / 12;
 
-    const futureValueInitial = params.initialAmount * Math.pow(1 + monthlyRate, months);
-    const futureValueMonthly = params.monthlyContribution * ( (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate );
-    const totalFutureValue = futureValueInitial + futureValueMonthly;
+    const futureValueInitial = initialAmount * Math.pow(1 + r, n);
+    const futureValueContributions = monthlyContribution * ((Math.pow(1 + r, n) - 1) / r);
+    const totalFutureValue = futureValueInitial + futureValueContributions;
     
-    const totalContribution = params.initialAmount + (params.monthlyContribution * months);
-    const totalGains = totalFutureValue - totalContribution;
+    const totalContributions = initialAmount + (monthlyContribution * n);
+    const totalInterest = totalFutureValue - totalContributions;
 
-    calculations.push({ description: "إجمالي المساهمات", amount: formatCurrency(totalContribution) });
-    calculations.push({ description: "إجمالي الأرباح المتوقعة", amount: formatCurrency(totalGains) });
-    calculations.push({ description: "القيمة المستقبلية الإجمالية", amount: formatCurrency(totalFutureValue) });
+    calculations.push({ description: "المبلغ المبدئي", amount: formatCurrency(initialAmount) });
+    calculations.push({ description: "إجمالي المساهمات الشهرية", amount: formatCurrency(monthlyContribution * n) });
+    calculations.push({ description: "إجمالي المساهمات", amount: formatCurrency(totalContributions) });
+    calculations.push({ description: "إجمالي الأرباح المتوقعة", amount: formatCurrency(totalInterest) });
 
     return {
-        summary: `بعد ${params.years} سنوات، من المتوقع أن تصل قيمة استثمارك إلى ${formatCurrency(totalFutureValue)}، بأرباح قدرها ${formatCurrency(totalGains)}.`,
+        summary: `بعد ${years} سنوات، من المتوقع أن تصل قيمة استثمارك إلى ${formatCurrency(totalFutureValue)}.`,
         calculations,
-        grossIncome: totalContribution,
+        grossIncome: totalContributions,
         totalTax: 0,
         totalInsurance: 0,
         netIncome: totalFutureValue,
-        applicableLaws: ["صيغة حساب الفائدة المركبة."]
+        applicableLaws: ["صيغة القيمة المستقبلية للمبلغ الموحد وسلسلة الدفعات."]
     };
 };
 
 export const getEndOfServiceReport = async (params: EndOfServiceParams): Promise<ReportData> => {
     const calculations: CalculationStep[] = [];
-    const first5Years = Math.min(params.yearsOfService, 5);
-    const after5Years = Math.max(0, params.yearsOfService - 5);
-
-    const gratuityFirst5 = first5Years * (params.lastSalary / 2);
-    calculations.push({ description: `مكافأة أول 5 سنوات (${first5Years} سنة * نصف شهر)`, amount: formatCurrency(gratuityFirst5) });
-
-    const gratuityAfter5 = after5Years * params.lastSalary;
-    calculations.push({ description: `مكافأة ما بعد 5 سنوات (${after5Years} سنة * شهر كامل)`, amount: formatCurrency(gratuityAfter5) });
+    const { lastSalary, yearsOfService } = params;
     
-    const totalGratuity = gratuityFirst5 + gratuityAfter5;
+    let gratuity = 0;
+    if (yearsOfService <= 5) {
+        gratuity = yearsOfService * 0.5 * lastSalary;
+        calculations.push({ description: `مكافأة أول 5 سنوات (${yearsOfService} سنوات × نصف شهر)`, amount: formatCurrency(gratuity) });
+    } else {
+        const first5YearsGratuity = 5 * 0.5 * lastSalary;
+        const remainingYears = yearsOfService - 5;
+        const remainingYearsGratuity = remainingYears * 1 * lastSalary;
+        gratuity = first5YearsGratuity + remainingYearsGratuity;
+        calculations.push({ description: "مكافأة أول 5 سنوات (5 سنوات × نصف شهر)", amount: formatCurrency(first5YearsGratuity) });
+        calculations.push({ description: `مكافأة السنوات التالية (${remainingYears.toFixed(1)} سنوات × شهر كامل)`, amount: formatCurrency(remainingYearsGratuity) });
+    }
     
     return {
-        summary: `مكافأة نهاية الخدمة المستحقة عن ${params.yearsOfService} سنة خدمة هي ${formatCurrency(totalGratuity)}.`,
+        summary: `مكافأة نهاية الخدمة المستحقة عن ${yearsOfService} سنوات هي ${formatCurrency(gratuity)}.`,
         calculations,
-        grossIncome: params.lastSalary,
+        grossIncome: lastSalary,
         totalTax: 0,
         totalInsurance: 0,
-        netIncome: totalGratuity,
+        netIncome: gratuity,
         applicableLaws: ["قانون العمل المصري رقم 12 لسنة 2003."]
     };
 };
 
 export const getFeasibilityStudyReport = async (params: FeasibilityStudyParams): Promise<ReportData> => {
-    const calculations: CalculationStep[] = [];
-    const contributionMargin = params.sellingPricePerUnit - params.variableCostPerUnit;
-    calculations.push({ description: "هامش المساهمة للوحدة", amount: formatCurrency(contributionMargin) });
+    const { fixedCosts, variableCostPerUnit, sellingPricePerUnit } = params;
+    const contributionMargin = sellingPricePerUnit - variableCostPerUnit;
     
-    const bepUnits = contributionMargin > 0 ? params.fixedCosts / contributionMargin : Infinity;
-    calculations.push({ description: "نقطة التعادل بالوحدات", amount: isFinite(bepUnits) ? bepUnits.toFixed(2) : "N/A" });
+    if (contributionMargin <= 0) {
+        throw new Error("error.unexpected");
+    }
 
-    const bepValue = bepUnits * params.sellingPricePerUnit;
-    calculations.push({ description: "نقطة التعادل بالقيمة", amount: isFinite(bepValue) ? formatCurrency(bepValue) : "N/A" });
+    const bepUnits = fixedCosts / contributionMargin;
+    const bepValue = bepUnits * sellingPricePerUnit;
+    
+    const calculations = [
+        { description: "هامش المساهمة للوحدة (سعر البيع - التكلفة المتغيرة)", amount: formatCurrency(contributionMargin) },
+        { description: "نقطة التعادل (بالوحدات)", amount: `${bepUnits.toFixed(2)} وحدة` },
+        { description: "نقطة التعادل (بالقيمة)", amount: formatCurrency(bepValue) }
+    ];
 
     return {
-        summary: `لتحقيق التعادل، يجب بيع ${bepUnits.toFixed(2)} وحدة شهريًا، بما يعادل مبيعات بقيمة ${formatCurrency(bepValue)}.`,
+        summary: `لتحقيق التعادل، يجب بيع ${bepUnits.toFixed(2)} وحدة، بما يعادل مبيعات بقيمة ${formatCurrency(bepValue)}.`,
         calculations,
-        grossIncome: isFinite(bepValue) ? bepValue : 0,
+        grossIncome: bepValue,
         totalTax: 0,
         totalInsurance: 0,
-        netIncome: isFinite(bepUnits) ? bepUnits : 0,
-        applicableLaws: ["مبادئ تحليل نقطة التعادل."]
+        netIncome: bepUnits,
+        applicableLaws: ["مبادئ محاسبة التكاليف وتحليل التعادل."]
     };
 };
 
 export const getElectricityReport = async (params: ElectricityParams): Promise<ReportData> => {
     const calculations: CalculationStep[] = [];
-    const brackets = ELECTRICITY_BRACKETS[params.meterType];
+    const brackets = ELECTRICITY_BRACKETS[params.meterType] || ELECTRICITY_BRACKETS.residential;
     let remainingKwh = params.consumptionKwh;
     let totalCost = 0;
-    let lastBracketKwh = 0;
+    let lastLimit = 0;
 
     for (const bracket of brackets) {
         if (remainingKwh <= 0) break;
-        const kwhInBracket = Math.min(remainingKwh, bracket.limit - lastBracketKwh);
+        const kwhInBracket = Math.min(remainingKwh, bracket.limit - lastLimit);
         const costInBracket = kwhInBracket * bracket.rate;
         totalCost += costInBracket;
+        calculations.push({ description: `شريحة حتى ${bracket.limit} كيلوواط (${kwhInBracket.toFixed(0)} كيلوواط × ${bracket.rate} جنيه)`, amount: formatCurrency(costInBracket) });
         remainingKwh -= kwhInBracket;
-        calculations.push({ description: `شريحة من ${lastBracketKwh + 1} إلى ${bracket.limit} كيلوواط`, amount: formatCurrency(costInBracket) });
-        lastBracketKwh = bracket.limit;
+        lastLimit = bracket.limit;
     }
+    
+    const serviceFee = 20;
+    totalCost += serviceFee;
+    calculations.push({ description: "مقابل خدمة عملاء", amount: formatCurrency(serviceFee) });
 
     return {
-        summary: `التكلفة التقديرية لاستهلاك ${params.consumptionKwh} كيلوواط/ساعة هي ${formatCurrency(totalCost)}.`,
+        summary: `الفاتورة التقديرية لاستهلاك ${params.consumptionKwh} كيلوواط/ساعة هي ${formatCurrency(totalCost)}.`,
         calculations,
         grossIncome: params.consumptionKwh,
         totalTax: totalCost,
         totalInsurance: 0,
-        netIncome: totalCost,
-        applicableLaws: ["تعريفة الكهرباء المعتمدة."]
+        netIncome: -totalCost,
+        applicableLaws: ["أسعار شرائح الكهرباء المعلنة من جهاز تنظيم مرفق الكهرباء."]
     };
 };
 
 export const getInheritanceReport = async (params: InheritanceParams): Promise<ReportData> => {
-     // Simplified model
     const calculations: CalculationStep[] = [];
     let remainingEstate = params.estateValue;
-    
-    let spouseShare = 0;
-    if(params.hasSpouse === 'wife' && params.sons + params.daughters > 0) spouseShare = params.estateValue * (1/8);
-    else if(params.hasSpouse === 'wife') spouseShare = params.estateValue * (1/4);
-    else if(params.hasSpouse === 'husband' && params.sons + params.daughters > 0) spouseShare = params.estateValue * (1/4);
-    else if(params.hasSpouse === 'husband') spouseShare = params.estateValue * (1/2);
-    
-    if (spouseShare > 0) {
-        calculations.push({ description: `نصيب ال${params.hasSpouse === 'wife' ? 'زوجة' : 'زوج'}`, amount: formatCurrency(spouseShare) });
-        remainingEstate -= spouseShare;
-    }
+    const hasChildren = params.sons > 0 || params.daughters > 0;
 
-    let fatherShare = 0;
+    const addShare = (heir: string, shareFraction: string, amount: number) => {
+        if (amount > 0) {
+            calculations.push({ description: `نصيب ${heir} (${shareFraction})`, amount: amount });
+            remainingEstate -= amount;
+        }
+    };
+    
+    if (params.hasSpouse === 'husband') {
+        const share = hasChildren ? 1/4 : 1/2;
+        addShare('الزوج', hasChildren ? 'الربع' : 'النصف', params.estateValue * share);
+    }
+    if (params.hasSpouse === 'wife') {
+        const share = hasChildren ? 1/8 : 1/4;
+        addShare('الزوجة', hasChildren ? 'الثمن' : 'الربع', params.estateValue * share);
+    }
     if (params.father) {
-        fatherShare = params.estateValue * (1/6);
-        calculations.push({ description: "نصيب الأب", amount: formatCurrency(fatherShare) });
-        remainingEstate -= fatherShare;
+        const share = 1/6;
+        addShare('الأب', 'السدس', params.estateValue * share);
     }
-
-    let motherShare = 0;
     if (params.mother) {
-        motherShare = params.estateValue * (1/6);
-        calculations.push({ description: "نصيب الأم", amount: formatCurrency(motherShare) });
-        remainingEstate -= motherShare;
+        const share = 1/6;
+        addShare('الأم', 'السدس', params.estateValue * share);
     }
 
-    const sharesForChildren = params.sons * 2 + params.daughters;
-    if (sharesForChildren > 0) {
-        const sonShareValue = remainingEstate * (2 / sharesForChildren);
-        const daughterShareValue = remainingEstate * (1 / sharesForChildren);
-        if (params.sons > 0) calculations.push({ description: `نصيب كل ابن`, amount: formatCurrency(sonShareValue) });
-        if (params.daughters > 0) calculations.push({ description: `نصيب كل بنت`, amount: formatCurrency(daughterShareValue) });
+    if (remainingEstate > 0 && hasChildren) {
+        const totalParts = (params.sons * 2) + params.daughters;
+        if (totalParts > 0) {
+            const sonShare = (remainingEstate / totalParts) * 2;
+            const daughterShare = remainingEstate / totalParts;
+            if (params.sons > 0) calculations.push({ description: `إجمالي نصيب الأبناء (${params.sons})`, amount: sonShare * params.sons });
+            if (params.daughters > 0) calculations.push({ description: `إجمالي نصيب البنات (${params.daughters})`, amount: daughterShare * params.daughters });
+        }
     }
-
+    
     return {
-        summary: `تم توزيع التركة بناءً على الورثة المحددين. هذه حسابات مبسطة وقد تختلف في الحالات المعقدة.`,
+        summary: `تم توزيع التركة البالغة ${formatCurrency(params.estateValue)} على الورثة المحددين.`,
         calculations,
         grossIncome: params.estateValue,
         totalTax: 0,
         totalInsurance: 0,
         netIncome: params.estateValue,
-        applicableLaws: ["قانون المواريث المصري المستمد من الشريعة الإسلامية (نموذج مبسط)."]
+        applicableLaws: ["أحكام المواريث في الشريعة الإسلامية والقانون المصري."]
     };
 };
 
 export const getCustomsReport = async (params: CustomsParams): Promise<ReportData> => {
     const calculations: CalculationStep[] = [];
-    const CATEGORY_RATES: { [key: string]: number } = { electronics: 0.05, clothing: 0.30, cars: 0.40, food: 0.10, other: 0.15 };
-    const customsRate = CATEGORY_RATES[params.category] || 0.15;
-
-    const customsDuty = params.shipmentValue * customsRate;
-    calculations.push({ description: `الضريبة الجمركية (${customsRate * 100}%)`, amount: formatCurrency(customsDuty) });
+    const { shipmentValue, category } = params;
     
-    const developmentFee = params.shipmentValue * 0.03; // Assumption
-    calculations.push({ description: `رسم تنمية (3%)`, amount: formatCurrency(developmentFee) });
-    
-    const vatBase = params.shipmentValue + customsDuty + developmentFee;
-    calculations.push({ description: `وعاء ضريبة القيمة المضافة`, amount: formatCurrency(vatBase) });
+    const dutyRates: Record<string, number> = { electronics: 0.05, clothing: 0.30, cars: 0.40, food: 0.10, other: 0.20 };
+    const dutyRate = dutyRates[category] || 0.20;
 
+    const customsDuty = shipmentValue * dutyRate;
+    calculations.push({ description: `الرسم الجمركي (${(dutyRate * 100).toFixed(0)}%)`, amount: formatCurrency(customsDuty) });
+    
+    const vatBase = shipmentValue + customsDuty;
     const vat = vatBase * 0.14;
-    calculations.push({ description: `ضريبة القيمة المضافة (14%)`, amount: formatCurrency(vat) });
+    calculations.push({ description: "ضريبة القيمة المضافة (14%)", amount: formatCurrency(vat) });
 
-    const totalTax = customsDuty + developmentFee + vat;
-    const totalCost = params.shipmentValue + totalTax;
+    const otherFees = 100;
+    calculations.push({ description: "رسوم أخرى (تقديرية)", amount: formatCurrency(otherFees) });
+    
+    const totalFees = customsDuty + vat + otherFees;
 
     return {
-        summary: `التكلفة الإجمالية المقدرة للشحنة بعد إضافة الرسوم والضرائب هي ${formatCurrency(totalCost)}.`,
+        summary: `إجمالي الرسوم التقديرية على شحنة بقيمة ${formatCurrency(shipmentValue)} هو ${formatCurrency(totalFees)}.`,
         calculations,
-        grossIncome: params.shipmentValue,
+        grossIncome: shipmentValue,
+        totalTax: totalFees,
+        totalInsurance: 0,
+        netIncome: shipmentValue + totalFees,
+        applicableLaws: ["قانون الجمارك رقم 207 لسنة 2020.", "قانون ضريبة القيمة المضافة رقم 67 لسنة 2016."]
+    };
+};
+
+export const getShareCapitalReport = async (params: ShareCapitalParams): Promise<ReportData> => {
+    const { authorizedCapital, issuedCapital, paidInCapital, numberOfShares } = params;
+    const parValue = numberOfShares > 0 ? issuedCapital / numberOfShares : 0;
+    const unpaidCapital = issuedCapital - paidInCapital;
+    const unissuedCapital = authorizedCapital - issuedCapital;
+
+    const calculations: CalculationStep[] = [
+        { description: "القيمة الاسمية للسهم", amount: formatCurrency(parValue) },
+        { description: "رأس المال غير المدفوع", amount: formatCurrency(unpaidCapital) },
+        { description: "رأس المال غير المصدر", amount: formatCurrency(unissuedCapital) }
+    ];
+
+    return {
+        summary: `تحليل هيكل رأس المال يظهر قيمة اسمية للسهم تبلغ ${formatCurrency(parValue)} ورأس مال غير مدفوع بقيمة ${formatCurrency(unpaidCapital)}.`,
+        calculations,
+        grossIncome: authorizedCapital,
+        totalTax: 0,
+        totalInsurance: 0,
+        netIncome: paidInCapital,
+        applicableLaws: ["قانون شركات المساهمة رقم 159 لسنة 1981."]
+    };
+};
+
+export const getRoiReport = async (params: RoiParams): Promise<ReportData> => {
+    const { initialInvestment, finalValue } = params;
+    const netProfit = finalValue - initialInvestment;
+    const roi = initialInvestment > 0 ? (netProfit / initialInvestment) * 100 : 0;
+
+    const calculations: CalculationStep[] = [
+        { description: "صافي الربح (القيمة النهائية - الاستثمار الأولي)", amount: formatCurrency(netProfit) },
+        { description: "العائد على الاستثمار (ROI)", amount: `${roi.toFixed(2)}%` }
+    ];
+
+    return {
+        summary: `حقق الاستثمار صافي ربح قدره ${formatCurrency(netProfit)}، بعائد على الاستثمار يبلغ ${roi.toFixed(2)}%.`,
+        calculations,
+        grossIncome: finalValue,
+        totalTax: 0,
+        totalInsurance: 0,
+        netIncome: netProfit,
+        applicableLaws: ["صيغة حساب العائد على الاستثمار."]
+    };
+};
+
+export const getRetirementReport = async (params: RetirementParams): Promise<ReportData> => {
+    const { currentAge, retirementAge, currentSavings, monthlyContribution, annualReturn, desiredMonthlyIncome } = params;
+    const yearsToRetirement = retirementAge - currentAge;
+    
+    const n = yearsToRetirement * 12;
+    const r = annualReturn / 100 / 12;
+    const fvCurrentSavings = currentSavings * Math.pow(1 + r, n);
+    const fvContributions = monthlyContribution * ((Math.pow(1 + r, n) - 1) / r);
+    const projectedSavings = fvCurrentSavings + fvContributions;
+
+    const capitalNeeded = desiredMonthlyIncome * 12 * 25;
+    const shortfallOrSurplus = projectedSavings - capitalNeeded;
+    
+    const calculations = [
+        { description: "رأس المال المطلوب عند التقاعد (قاعدة 4%)", amount: formatCurrency(capitalNeeded) },
+        { description: "قيمة المدخرات الحالية عند التقاعد", amount: formatCurrency(fvCurrentSavings) },
+        { description: "قيمة المساهمات الشهرية عند التقاعد", amount: formatCurrency(fvContributions) },
+        { description: `الفائض أو العجز`, amount: formatCurrency(shortfallOrSurplus) },
+    ];
+
+    return {
+        summary: `لتحقيق دخل شهري قدره ${formatCurrency(desiredMonthlyIncome)}، تحتاج إلى رأس مال يبلغ ${formatCurrency(capitalNeeded)}. من المتوقع أن تصل مدخراتك إلى ${formatCurrency(projectedSavings)}، مما ينتج عنه ${shortfallOrSurplus >= 0 ? 'فائض' : 'عجز'} بقيمة ${formatCurrency(Math.abs(shortfallOrSurplus))}.`,
+        calculations,
+        grossIncome: capitalNeeded,
+        totalTax: 0,
+        totalInsurance: 0,
+        netIncome: projectedSavings,
+        applicableLaws: ["مبادئ التخطيط المالي للتقاعد."]
+    };
+};
+
+export const getFreelancerTaxReport = async (params: FreelancerTaxParams): Promise<ReportData> => {
+    const calculations: CalculationStep[] = [];
+    calculations.push({ description: "إجمالي الإيرادات السنوية", amount: formatCurrency(params.revenue) });
+
+    let expenses = 0;
+    if (params.expenseType === 'deemed') {
+        expenses = params.revenue * 0.10;
+        calculations.push({ description: "خصم المصروفات الحكمية (10%)", amount: formatCurrency(expenses) });
+    } else {
+        expenses = params.actualExpenses || 0;
+        calculations.push({ description: "خصم المصروفات الفعلية", amount: formatCurrency(expenses) });
+    }
+
+    const netProfit = params.revenue - expenses;
+    calculations.push({ description: "صافي الربح الخاضع للضريبة", amount: formatCurrency(netProfit) });
+    
+    const brackets = SALARY_TAX_BRACKETS[params.year] || SALARY_TAX_BRACKETS[2024];
+    const taxableIncome = Math.max(0, netProfit - brackets.personalExemption);
+    calculations.push({ description: `خصم الشريحة المعفاة (شخصي)`, amount: formatCurrency(brackets.personalExemption) });
+    calculations.push({ description: "وعاء الضريبة النهائي", amount: formatCurrency(taxableIncome) });
+    
+    let totalTax = 0;
+    let remainingIncome = taxableIncome;
+    for (const bracket of brackets.brackets) {
+        if (remainingIncome <= 0) break;
+        const taxableInBracket = Math.min(remainingIncome, bracket.upTo);
+        const taxInBracket = taxableInBracket * bracket.rate;
+        totalTax += taxInBracket;
+        remainingIncome -= taxableInBracket;
+        calculations.push({ description: `شريحة ${formatCurrency(bracket.upTo)} بسعر ${bracket.rate * 100}%`, amount: formatCurrency(taxInBracket) });
+    }
+
+    return {
+        summary: `الضريبة السنوية المستحقة على إيرادات المهن الحرة هي ${formatCurrency(totalTax)}.`,
+        calculations,
+        grossIncome: params.revenue,
         totalTax,
         totalInsurance: 0,
-        netIncome: totalCost,
-        applicableLaws: ["قانون الجمارك المصري.", "قانون ضريبة القيمة المضافة."]
+        netIncome: params.revenue - totalTax,
+        applicableLaws: ["قانون ضريبة الدخل رقم 91 لسنة 2005 (مواد المهن غير التجارية)."]
+    };
+};
+
+export const getCapitalGainsTaxReport = async (params: CapitalGainsTaxParams): Promise<ReportData> => {
+    const calculations: CalculationStep[] = [];
+    const netProfit = params.sellingPrice - params.purchasePrice - params.costs;
+    calculations.push({ description: "إجمالي سعر البيع", amount: formatCurrency(params.sellingPrice) });
+    calculations.push({ description: "خصم تكلفة الشراء", amount: formatCurrency(params.purchasePrice) });
+    calculations.push({ description: "خصم مصاريف السمسرة", amount: formatCurrency(params.costs) });
+    calculations.push({ description: "صافي الربح الرأسمالي", amount: formatCurrency(netProfit) });
+
+    const totalTax = netProfit > 0 ? netProfit * 0.10 : 0;
+    calculations.push({ description: "الضريبة المستحقة (10%)", amount: formatCurrency(totalTax) });
+
+    return {
+        summary: `الضريبة المستحقة على الأرباح الرأسمالية هي ${formatCurrency(totalTax)}.`,
+        calculations,
+        grossIncome: params.sellingPrice,
+        totalTax,
+        totalInsurance: 0,
+        netIncome: netProfit - totalTax,
+        applicableLaws: ["قانون ضريبة الدخل رقم 91 لسنة 2005 (ضريبة الأرباح الرأسمالية)."]
+    };
+};
+
+export const getRealEstateTransactionTaxReport = async (params: RealEstateTransactionTaxParams): Promise<ReportData> => {
+    const calculations: CalculationStep[] = [];
+    const taxRate = 0.025;
+    const totalTax = params.saleValue * taxRate;
+
+    calculations.push({ description: "إجمالي قيمة البيع", amount: formatCurrency(params.saleValue) });
+    calculations.push({ description: `الضريبة المستحقة (${taxRate * 100}%)`, amount: formatCurrency(totalTax) });
+
+    return {
+        summary: `ضريبة التصرفات العقارية المستحقة هي ${formatCurrency(totalTax)}.`,
+        calculations,
+        grossIncome: params.saleValue,
+        totalTax,
+        totalInsurance: 0,
+        netIncome: params.saleValue - totalTax,
+        applicableLaws: ["قانون ضريبة الدخل رقم 91 لسنة 2005 (المادة 42)."]
     };
 };

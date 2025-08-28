@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
-import type { CalculationRecord, ReportData, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams, LoanParams, PayrollParams, SavingsGoalParams, ProfitMarginParams } from '../types';
+import type { CalculationRecord, ReportData, TaxParams, CorporateTaxParams, VATTaxParams, RealEstateTaxParams, WithholdingTaxParams, SocialInsuranceParams, StampDutyParams, ZakatParams, InvestmentParams, EndOfServiceParams, FeasibilityStudyParams, ElectricityParams, InheritanceParams, CustomsParams, LoanParams, PayrollParams, SavingsGoalParams, ProfitMarginParams, ShareCapitalParams, RoiParams, RetirementParams, FreelancerTaxParams, CapitalGainsTaxParams, RealEstateTransactionTaxParams, BmiParams, TipParams, FuelCostParams, GpaParams, CalorieParams, DiscountParams, PaceParams, TransportationParams, InflationParams } from '../types';
 import ReportDisplay from '../components/ReportDisplay';
 import { CORPORATE_TAX_LAWS } from '../constants';
 import { useTranslation, TranslationKey } from '../i18n/context';
@@ -31,10 +31,17 @@ const HistoryItem: React.FC<{ record: CalculationRecord; onView: () => void; onD
       summaryLine2 = `${t('history.item.netIncome')}: ${formatCurrency(record.report.netIncome)}`;
       break;
     case 'payroll':
-       const pPayroll = params as PayrollParams;
-       title = t('history.item.payroll.title', pPayroll.year);
-       summaryLine1 = `${t('history.item.grossIncome')}: ${formatCurrency(pPayroll.grossMonthlySalary)}`;
-       summaryLine2 = `${t('history.item.netIncome')}: ${formatCurrency(record.report.netIncome)}`;
+       const pPayroll = params as any;
+       // Differentiate between individual payroll calculation and a payroll run summary
+       if (pPayroll.grossMonthlySalary) { 
+           title = t('history.item.payroll.title', pPayroll.year);
+           summaryLine1 = `${t('history.item.grossIncome')}: ${formatCurrency(pPayroll.grossMonthlySalary)}`;
+           summaryLine2 = `${t('history.item.netIncome')}: ${formatCurrency(record.report.netIncome)}`;
+       } else { // Handle Payroll Run Summary
+           title = t('payrollManager.report.title', t(`month.${pPayroll.month}` as any), pPayroll.year);
+           summaryLine1 = `${t('payrollManager.report.employeeCount')}: ${pPayroll.employeeCount}`;
+           summaryLine2 = `${t('report.netIncome')}: ${formatCurrency(record.report.netIncome)}`;
+       }
        break;
     case 'corporate':
       const pCorp = params as CorporateTaxParams;
@@ -140,6 +147,99 @@ const HistoryItem: React.FC<{ record: CalculationRecord; onView: () => void; onD
        const netMargin = record.report.grossIncome > 0 ? (record.report.netIncome / record.report.grossIncome * 100).toFixed(2) : '0.00';
        summaryLine2 = `${t('history.item.profitMargin.netMargin')}: ${netMargin}%`;
        break;
+    case 'shareCapital':
+        const pShare = params as ShareCapitalParams;
+        title = t('history.item.shareCapital.title');
+        summaryLine1 = `${t('history.item.shareCapital.authorized')}: ${formatCurrency(pShare.authorizedCapital)}`;
+        summaryLine2 = `${t('history.item.shareCapital.parValue')}: ${formatCurrency(record.report.calculations[0]?.amount as number)}`;
+        break;
+    case 'roi':
+        const pRoi = params as RoiParams;
+        title = t('history.item.roi.title');
+        summaryLine1 = `${t('history.item.roi.investment')}: ${formatCurrency(pRoi.initialInvestment)}`;
+        summaryLine2 = `${t('history.item.roi.netProfit')}: ${formatCurrency(record.report.netIncome)}`;
+        break;
+    case 'retirement':
+        const pRetirement = params as RetirementParams;
+        title = t('history.item.retirement.title');
+        summaryLine1 = `${t('history.item.retirement.target')}: ${formatCurrency(record.report.grossIncome)}`;
+        summaryLine2 = `${t('history.item.retirement.projected')}: ${formatCurrency(record.report.netIncome)}`;
+        break;
+    case 'freelancer':
+       title = t('history.item.freelancer.title', (params as FreelancerTaxParams).year);
+       summaryLine1 = `${t('history.item.revenue')}: ${formatCurrency((params as FreelancerTaxParams).revenue)}`;
+       summaryLine2 = `${t('history.item.taxDue')}: ${formatCurrency(record.report.totalTax)}`;
+       break;
+    case 'capitalGains':
+       title = t('history.item.capitalGains.title', (params as CapitalGainsTaxParams).year);
+       summaryLine1 = `${t('history.item.grossIncome')}: ${formatCurrency((params as CapitalGainsTaxParams).sellingPrice)}`;
+       summaryLine2 = `${t('history.item.taxDue')}: ${formatCurrency(record.report.totalTax)}`;
+       break;
+    case 'realEstateTransaction':
+       title = t('history.item.realEstateTransaction.title', (params as RealEstateTransactionTaxParams).year);
+       summaryLine1 = `${t('history.item.transactionAmount')}: ${formatCurrency((params as RealEstateTransactionTaxParams).saleValue)}`;
+       summaryLine2 = `${t('history.item.taxDue')}: ${formatCurrency(record.report.totalTax)}`;
+       break;
+    case 'bmi':
+        const pBmi = params as BmiParams;
+        title = t('history.item.bmi.title');
+        summaryLine1 = `${t('history.item.bmi.height')}: ${pBmi.height} cm, ${t('history.item.bmi.weight')}: ${pBmi.weight} kg`;
+        summaryLine2 = `${t('history.item.bmi.result')}: ${record.report.netIncome.toFixed(2)}`;
+        break;
+    case 'savingsGoal':
+        const pSavings = params as SavingsGoalParams;
+        title = t('history.item.savingsGoal.title', pSavings.goalName);
+        summaryLine1 = `${t('history.item.savingsGoal.target')}: ${formatCurrency(pSavings.targetAmount)}`;
+        summaryLine2 = `${t('history.item.savingsGoal.time')}: ${record.report.calculations[0]?.amount}`;
+        break;
+    case 'tip':
+        const pTip = params as TipParams;
+        title = t('history.item.tip.title');
+        summaryLine1 = `${t('history.item.tip.bill')}: ${formatCurrency(pTip.billAmount)}`;
+        summaryLine2 = `${t('history.item.tip.total')}: ${formatCurrency(record.report.netIncome)}`;
+        break;
+    case 'fuelCost':
+        const pFuel = params as FuelCostParams;
+        title = t('history.item.fuelCost.title');
+        summaryLine1 = `${t('history.item.fuelCost.distance')}: ${pFuel.distance} km`;
+        summaryLine2 = `${t('history.item.fuelCost.cost')}: ${formatCurrency(record.report.totalTax)}`;
+        break;
+    case 'gpa':
+        const pGpa = params as GpaParams;
+        title = t('history.item.gpa.title');
+        summaryLine1 = `${t('history.item.gpa.courses')}: ${pGpa.courses.length}`;
+        summaryLine2 = `${t('history.item.gpa.result')}: ${record.report.netIncome.toFixed(2)}`;
+        break;
+    case 'calorie':
+        title = t('history.item.calorie.title');
+        summaryLine1 = `${t('history.item.calorie.bmr')}: ${record.report.netIncome.toLocaleString()} Kcal`;
+        summaryLine2 = `${t('history.item.calorie.tdee')}: ${record.report.grossIncome.toLocaleString()} Kcal`;
+        break;
+    case 'discount':
+        const pDiscount = params as DiscountParams;
+        title = t('history.item.discount.title');
+        summaryLine1 = `${t('history.item.discount.original')}: ${formatCurrency(pDiscount.originalPrice)}`;
+        summaryLine2 = `${t('history.item.discount.final')}: ${formatCurrency(record.report.netIncome)}`;
+        break;
+    case 'pace':
+        const pPace = params as PaceParams;
+        title = t('history.item.pace.title');
+        const totalTime = `${pPace.hours}h ${pPace.minutes}m ${pPace.seconds}s`;
+        summaryLine1 = `${t('history.item.pace.distance')}: ${pPace.distance} km, ${t('history.item.pace.time')}: ${totalTime}`;
+        summaryLine2 = `${t('history.item.pace.result')}: ${record.report.calculations[0]?.amount}`;
+        break;
+    case 'transportation':
+        const pTrans = params as TransportationParams;
+        title = t('history.item.transportation.title');
+        summaryLine1 = `${t('history.item.transportation.mode')}: ${t(`transportation.mode.${pTrans.mode}`)}`;
+        summaryLine2 = `${t('history.item.transportation.cost')}: ${formatCurrency(record.report.netIncome)}`;
+        break;
+    case 'inflation':
+        const pInflation = params as InflationParams;
+        title = t('history.item.inflation.title');
+        summaryLine1 = `${t('history.item.inflation.amount')}: ${formatCurrency(pInflation.amount)} for ${pInflation.years} years`;
+        summaryLine2 = `${t('history.item.inflation.power')}: ${formatCurrency(record.report.netIncome)}`;
+        break;
   }
 
 
@@ -189,12 +289,14 @@ const History: React.FC = () => {
   }
   
   const handleExportAllToExcel = async () => {
-    if (isExporting) return;
+    if (isExporting || history.length === 0) return;
     setIsExporting(true);
     try {
         const uri = generateHistoryExcelDataUri(sortedHistory, (key, ...args) => t(key as any, ...args));
-        const filename = `Calculation-History-${new Date().toISOString().split('T')[0]}.xlsx`;
-        downloadFile(filename, uri, (key) => t(key as any));
+        if (uri) {
+            const filename = `Calculation-History-${new Date().toISOString().split('T')[0]}.xlsx`;
+            await downloadFile(filename, uri, (key) => t(key as any));
+        }
     } catch (error) {
         console.error("Error during history export:", error);
         alert(t('error.unexpected'));

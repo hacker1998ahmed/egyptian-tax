@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import InputField from '../components/InputField';
 import { useTranslation } from '../i18n/context';
+import useLocalStorage from '../hooks/useLocalStorage';
+import type { CalculationRecord, BmiParams, ReportData } from '../types';
 
 const ResultCard: React.FC<{ title: string; value: string; colorClass?: string }> = ({ title, value, colorClass = 'border-cyan-500' }) => (
   <div className={`p-4 rounded-lg bg-gray-200 dark:bg-gray-900/50 border-l-4 ${colorClass}`}>
@@ -13,8 +15,11 @@ const BMICalculator: React.FC = () => {
   const { t } = useTranslation();
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
+  const [, setHistory] = useLocalStorage<CalculationRecord[]>('taxHistory', []);
+  const [isSaved, setIsSaved] = useState(false);
 
   const bmiResult = useMemo(() => {
+    setIsSaved(false); // Reset saved state on new calculation
     const h = parseFloat(height);
     const w = parseFloat(weight);
 
@@ -51,10 +56,38 @@ const BMICalculator: React.FC = () => {
     }
     return null;
   }, [height, weight, t]);
+
+  const handleSave = () => {
+    if (!bmiResult) return;
+    const params: BmiParams = { height: parseFloat(height), weight: parseFloat(weight) };
+    const report: ReportData = {
+      summary: `BMI calculation for height ${params.height}cm and weight ${params.weight}kg resulted in a BMI of ${bmiResult.bmi} (${bmiResult.category}).`,
+      calculations: [
+        { description: t('bmi.results.bmi'), amount: bmiResult.bmi },
+        { description: t('bmi.results.category'), amount: bmiResult.category },
+        { description: t('bmi.results.healthyRange'), amount: bmiResult.healthyRange },
+      ],
+      grossIncome: params.weight,
+      netIncome: parseFloat(bmiResult.bmi),
+      totalTax: 0,
+      totalInsurance: 0,
+      applicableLaws: ['WHO BMI classification standards.'],
+    };
+    const newRecord: CalculationRecord = {
+      id: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
+      type: 'bmi',
+      params,
+      report,
+    };
+    setHistory(prev => [newRecord, ...prev]);
+    setIsSaved(true);
+  };
   
   const resetForm = () => {
       setHeight('');
       setWeight('');
+      setIsSaved(false);
   }
 
   return (
@@ -102,6 +135,11 @@ const BMICalculator: React.FC = () => {
             <ResultCard title={t('bmi.results.category')} value={bmiResult.category} colorClass={bmiResult.colorClass} />
             <ResultCard title={t('bmi.results.healthyRange')} value={bmiResult.healthyRange} colorClass="border-cyan-500" />
           </div>
+            <div className="text-center mt-6">
+                <button onClick={handleSave} disabled={isSaved} className="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    {isSaved ? t('common.done') : t('history.item.save')}
+                </button>
+            </div>
         </div>
       )}
     </div>
